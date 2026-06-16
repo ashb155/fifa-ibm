@@ -17,3 +17,10 @@ Stratos is an adaptive, multilingual match companion that unites spatial match d
 Stratos directly answers the challenge's call to demonstrate how "human-centered, explainable AI can improve understanding, trust, and accessibility at global scale." 
 
 By addressing both the **Understanding & Explanation** (tactical shift analysis) and **Fan & Learning Experiences** (multilingual "teach me the game" assistant) tracks, Stratos proves that AI can democratize sports analytics. A fan in Brazil, a tactical analyst in Germany, and a new viewer in India can all watch the exact same match, ask natural language questions, and receive an AI-powered explanation tailored precisely to their language and soccer knowledge level.
+
+## Local Setup & Orchestration
+
+1. **Install Dependencies:** `pip install -r requirements.txt`
+2. **Ingest Rules:** Run `python docling_ingest.py` to populate ChromaDB with the FIFA Laws.
+3. **Run MCP Gateway:** `contextforge start --config mcp_settings.json` to securely expose the Python tools.
+4. **Langflow:** Import `langflow_setup.md` instructions to your canvas and configure the IBM Granite LLM.
