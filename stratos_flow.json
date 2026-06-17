@@ -1,0 +1,92 @@
+{
+  "name": "Stratos: Football Understood",
+  "description": "Agentic flow connecting WatsonX Granite with FastMCP tools.",
+  "data": {
+    "nodes": [
+      {
+        "id": "ChatInput-1",
+        "type": "ChatInput",
+        "data": {
+          "type": "ChatInput",
+          "node": {
+            "template": {
+              "message": {"value": ""}
+            }
+          }
+        }
+      },
+      {
+        "id": "Prompt-1",
+        "type": "PromptTemplate",
+        "data": {
+          "type": "PromptTemplate",
+          "node": {
+            "template": {
+              "template": {"value": "Analyze this request: {message}"}
+            }
+          }
+        }
+      },
+      {
+        "id": "MCPTool-1",
+        "type": "MCPTool",
+        "data": {
+          "type": "MCPTool",
+          "node": {
+            "template": {
+              "server_url": {"value": "http://127.0.0.1:8000/sse"}
+            }
+          }
+        }
+      },
+      {
+        "id": "LLM-1",
+        "type": "OpenAIModel",
+        "data": {
+          "type": "OpenAIModel",
+          "node": {
+            "template": {}
+          }
+        }
+      },
+      {
+        "id": "ChatOutput-1",
+        "type": "ChatOutput",
+        "data": {
+          "type": "ChatOutput",
+          "node": {
+            "template": {
+              "message": {"value": ""}
+            }
+          }
+        }
+      }
+    ],
+    "edges": [
+      {
+        "source": "ChatInput-1",
+        "target": "Prompt-1",
+        "sourceHandle": "message",
+        "targetHandle": "message"
+      },
+      {
+        "source": "Prompt-1",
+        "target": "LLM-1",
+        "sourceHandle": "prompt",
+        "targetHandle": "input"
+      },
+      {
+        "source": "MCPTool-1",
+        "target": "LLM-1",
+        "sourceHandle": "tool",
+        "targetHandle": "tools"
+      },
+      {
+        "source": "LLM-1",
+        "target": "ChatOutput-1",
+        "sourceHandle": "response",
+        "targetHandle": "message"
+      }
+    ]
+  }
+}
