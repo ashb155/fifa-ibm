@@ -1,26 +1,46 @@
-# Stratos — Football, Understood.
-**An IBM AI Builders Challenge Submission (June: AI Inside the Match)**
+# Stratos: Football, Understood.
 
-## The Problem We Are Solving
-The World Cup generates a shared emotion for billions of fans watching game-changing moments unfold in real time. However, the global audience experiences the match with vastly different levels of tactical knowledge and language fluency. While casual fans may not understand why a coach pulled a midfielder to shift into a 5-4-1, or why a specific offside rule was enforced, current digital solutions lack the ability to adapt to these different user profiles. Fans need an adaptive companion that bridges the gap between raw match data, complex regulatory rules, and personal comprehension.
+**Stratos: See the Game From Above**
+An AI-powered match companion built for the IBM "AI Inside the Match" Hackathon.
 
-## Your AI/Technical Approach
-Stratos is an adaptive, multilingual match companion that unites spatial match data with deep regulatory knowledge. To build this unified solution, we leveraged the complete suite of required IBM AI-supported technologies:
+## The Problem
+Football is a global game, but the way we consume it is fragmented by language and tactical literacy. 
+1. **The Tactical Gap (Idea 2 - TactiLens)**: Coaches make 20+ in-game decisions per match (substitutions, formation shifts, pressing triggers). Casual fans don't understand them. 
+2. **The Language & Knowledge Gap (Idea 3 - FanLens)**: A fan in Brazil, India, and Germany all watch the same match with completely different levels of soccer knowledge and language. 
 
-*   **IBM Docling:** Used to parse the unstructured, multi-column IFAB Laws of the Game PDF into semantic chunks while perfectly preserving its layout and tabular guidelines.
-*   **ContextForge:** Acts as our Model Context Protocol (MCP) gateway. It securely federates our real-time match data API (Football-Data.org / StatsBomb) and our local ChromaDB rules vector store into standardized tools. This prevents context bloat and enforces rate limits.
-*   **Langflow:** Serves as our visual RAG orchestration engine. It manages a dynamic prompt template that injects the user's language (e.g., English, Portuguese, German) and knowledge tier (New, Casual, Tactical) to route tool calls appropriately.
-*   **IBM Granite:** We utilize `granite-3-3-8b-instruct` as our core foundation model to reason over the retrieved spatial coordinates and rules, generating highly accurate, localized, and jargon-appropriate explanations.
-*   **IBM Bob:** Used throughout our Software Development Lifecycle (SDLC) as an AI development partner to initialize our repository, generate the Python ingestion scripts for Docling, and perform automated code reviews before deployment.
+Current broadcasting and apps give everyone the exact same feed. **Stratos gives every fan a personalized AI companion that explains the game at their exact level of understanding, in their native language.**
 
-## Why Your Solution Matters in the Context of the Challenge
-Stratos directly answers the challenge's call to demonstrate how "human-centered, explainable AI can improve understanding, trust, and accessibility at global scale." 
+## What it Does
+Stratos merges two core experiences into one app:
+- **TactiLens (Tactical Decision Explainer)**: Analyzes match event data (StatsBomb/Football-Data.org) and generates a contextual narrative explaining *why* a coach made a specific decision (e.g., "74th minute, shifted to 5-4-1").
+- **FanLens (Adaptive Multilingual Companion)**: Allows fans to ask natural language questions ("Why was that offside?") and receives answers perfectly tuned to their selected persona (Beginner, Casual, Tactical) and language.
 
-By addressing both the **Understanding & Explanation** (tactical shift analysis) and **Fan & Learning Experiences** (multilingual "teach me the game" assistant) tracks, Stratos proves that AI can democratize sports analytics. A fan in Brazil, a tactical analyst in Germany, and a new viewer in India can all watch the exact same match, ask natural language questions, and receive an AI-powered explanation tailored precisely to their language and soccer knowledge level.
+## Technical Approach & IBM Stack
 
-## Local Setup & Orchestration
+Stratos leverages the required IBM technology stack to achieve a production-grade architecture:
 
-1. **Install Dependencies:** `pip install -r requirements.txt`
-2. **Ingest Rules:** Run `python docling_ingest.py` to populate ChromaDB with the FIFA Laws.
-3. **Run MCP Gateway:** `contextforge start --config mcp_settings.json` to securely expose the Python tools.
-4. **Langflow:** Import `langflow_setup.md` instructions to your canvas and configure the IBM Granite LLM.
+- **IBM Docling**: Used to ingest and semantically chunk the official FIFA Laws of the Game PDF and tournament regulations (`docling_ingest.py`). These chunks provide grounded truth to prevent LLM hallucinations.
+- **IBM Granite (watsonx.ai)**: The core reasoning engine. We utilize Granite 3.1 8B Instruct for its exceptional multilingual capabilities and instruction-following, allowing it to dynamically switch tone between a "Beginner" explanation and a "Tactical" deep-dive (`granite.py`).
+- **Langflow**: The visual orchestration layer (`stratos_flow.json`). It manages the pipeline: user input → prompt enrichment → MCP tool execution → Granite generation → UI delivery.
+- **Context Forge / FastMCP**: Our Python server (`mcp_server.py`) exposes tools (StatsBomb timeline retrieval, ChromaDB vector search) over the Model Context Protocol.
+
+## Why It Matters
+"Real-world impact at global scale" is the ultimate goal. By combining multilingual NLP with dynamic complexity adjustment, Stratos bypasses traditional sporting jargon. It democratizes football tactics, making the world's most popular sport accessible to absolutely anyone, anywhere.
+
+---
+
+### Setup Instructions
+
+1. **Install Dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+2. **Environment Variables**
+   Copy `.env.example` to `.env` and add your WatsonX credentials.
+3. **Start the MCP Server**
+   ```bash
+   python mcp_server.py
+   ```
+   *Note: Langflow will connect to this directly via `http://127.0.0.1:8000/sse`.*
+4. **Import Langflow**
+   Import `stratos_flow.json` into your local Langflow instance.
