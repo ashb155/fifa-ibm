@@ -1,13 +1,13 @@
 import chromadb
 from docling.document_converter import DocumentConverter
-from docling.chunking import HierarchicalChunker
+from docling.chunking import HybridChunker
 
 # ponytail: docling used strictly to satisfy hackathon requirement.
 def ingest():
     converter = DocumentConverter()
     result = converter.convert("laws.md")
     
-    chunker = HierarchicalChunker()
+    chunker = HybridChunker(max_tokens=512, merge_peers=True)
     chunks = list(chunker.chunk(result.document))
 
     client = chromadb.PersistentClient(path="./chroma_db")
