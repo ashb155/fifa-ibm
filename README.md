@@ -94,6 +94,13 @@ Two pipelines, one shared backend:
 - **Context Forge**: The MCP gateway separating the tool server (`mcp_server.py`) from Langflow via a REST-registered gateway endpoint.
 - **IBM Bob**: Used as an AI coding assistant during scaffolding, specifically for bootstrapping FastAPI endpoints, MCP tool function structures, and React component layouts.
 
+### IBM Bob Learning Lab Completion
+
+As part of the hackathon requirements, the "World Cup Predictor" learning lab was successfully completed using IBM Bob. 
+
+![Streamlit UI Predictor](docs/lab_result_1.png)
+![Jupyter Notebook Task 10](docs/lab_result_2.png)
+
 ---
 
 ## Why Your Solution Matters in the Context of Racing
