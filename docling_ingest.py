@@ -13,11 +13,11 @@ def ingest():
     client = chromadb.PersistentClient(path="./chroma_db")
     collection = client.get_or_create_collection("fifa_laws")
     
-    # ponytail: one-line list comprehensions for extraction
-    docs = [c.text for c in chunks]
-    ids = [f"chunk_{i}" for i in range(len(chunks))]
-    metadatas = [{"source": "laws.md"} for _ in chunks]
-
+    docs, ids, metadatas = [], [], []
+    for i, c in enumerate(chunks):
+        docs.append(c.text)
+        ids.append(f"chunk_{i}")
+        metadatas.append({"source": "laws.md"})
     collection.add(documents=docs, ids=ids, metadatas=metadatas)
     print(f"Ingested {len(docs)} chunks.")
 

@@ -2,7 +2,7 @@ from mcp.server.fastmcp import FastMCP
 import chromadb
 from statsbombpy import sb
 import requests
-import sys
+import os
 
 # ponytail: bind to port 8012 to avoid conflict with gateway on 8000
 mcp = FastMCP("Stratos_Server", port=8012)
@@ -11,8 +11,7 @@ mcp = FastMCP("Stratos_Server", port=8012)
 try:
     chroma_client = chromadb.PersistentClient(path="./chroma_db")
     collection = chroma_client.get_or_create_collection(name="fifa_laws")
-except Exception as e:
-    sys.stderr.write(f"Chroma DB initialization failed: {e}\n")
+except Exception:
     collection = None
 
 @mcp.tool()
@@ -49,10 +48,12 @@ def get_tactical_timeline(match_id: int = 3869685) -> str:
         return f"Service unavailable (StatsBomb API error: {str(e)})"
 
 @mcp.tool()
-def get_live_match_context(match_id: str, api_key: str) -> str:
+def get_live_match_context(match_id: str) -> str:
     """Fetches real-time match data from Football-Data.org"""
     # ponytail: one-line GET request, minimal error handling
     try:
+        api_key = os.getenv("FOOTBALL_DATA_ORG_KEY")
+        if not api_key: return "Error: API key missing"
         r = requests.get(f"https://api.football-data.org/v4/matches/{match_id}", headers={"X-Auth-Token": api_key})
         if r.status_code != 200: return f"Error: {r.status_code}"
         
