@@ -34,18 +34,20 @@
           "type": "MCPTool",
           "node": {
             "template": {
-              "server_url": {"value": "http://127.0.0.1:8000/sse"}
+              "server_url": {"value": "http://127.0.0.1:4444/sse"}
             }
           }
         }
       },
       {
         "id": "LLM-1",
-        "type": "OpenAIModel",
+        "type": "WatsonXModel",
         "data": {
-          "type": "OpenAIModel",
+          "type": "WatsonXModel",
           "node": {
-            "template": {}
+            "template": {
+              "model_id": {"value": "ibm/granite-3-8b-instruct"}
+            }
           }
         }
       },

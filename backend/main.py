@@ -3,8 +3,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
-
-from backend.core.granite import generate_response
+import httpx
 
 app = FastAPI(title="Stratos Backend")
 
@@ -44,24 +43,41 @@ async def get_timeline(match_id: str):
 
 @app.post("/chat")
 async def chat(request: ChatRequest):
-    # 1. Context Enrichment via MCP Server/Gateway
-    context = "No context available."
-    try:
-        # Assuming MCP server has a REST tool endpoint or we call the tools directly
-        # For ponytail minimal: we will just pass a dummy context until the MCP client is fully wired
-        context = "Match context: Team A is attacking. 74th minute."
-    except Exception as e:
-        print(f"MCP Tool error: {e}")
-
-    # 2. Generation via Granite
-    response = generate_response(
-        query=request.query,
-        context=context,
-        persona=request.persona
-    )
+    # Call the Langflow REST API instead of bypassing it
+    langflow_url = os.getenv("LANGFLOW_API_URL", "http://127.0.0.1:7860/api/v1/run/Stratos")
     
-    return {
-        "response": response,
-        "source": "WatsonX Granite",
-        "context_used": context
+    payload = {
+        "input_value": request.query,
+        "input_type": "chat",
+        "output_type": "chat",
+        "tweaks": {
+            "Prompt-1": {
+                "knowledge_level": request.persona,
+                "language": request.language
+            }
+        }
     }
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            # Note: Awaiting Langflow to process the flow
+            lf_response = await client.post(langflow_url, json=payload, timeout=60.0)
+            lf_response.raise_for_status()
+            result = lf_response.json()
+            
+            # Extract response from Langflow output format
+            # This is a safe parsing logic depending on Langflow's nested JSON
+            try:
+                message = result["outputs"][0]["outputs"][0]["results"]["message"]["text"]
+            except KeyError:
+                message = str(result)
+                
+            return {
+                "response": message,
+                "source": "Langflow Orchestration (Granite + Context Forge)"
+            }
+    except Exception as e:
+        return {
+            "response": f"Error calling Langflow API: {str(e)}\nPlease ensure Langflow is running and stratos_flow.json is imported.",
+            "source": "Error"
+        }
