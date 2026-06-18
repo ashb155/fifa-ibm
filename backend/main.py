@@ -33,6 +33,14 @@ class ChatRequest(BaseModel):
 class SessionCreate(BaseModel):
     match_id: str
 
+
+@app.get("/")
+async def root():
+    return {
+        "status": "online",
+        "message": "Go to /docs to test endpoints."
+    }
+
 @app.post("/session/create")
 async def create_session(session: SessionCreate):
     return {"session_id": "mock_session_123", "match_id": session.match_id}
