@@ -5,7 +5,7 @@ An AI-powered match companion built for the IBM "AI Inside the Match" Hackathon.
 
 ---
 
-## The Problem
+## The Problem You Are Solving
 During the World Cup, the same 90 minutes are experienced as completely different events depending on who is watching. A new fan sees a player flagged offside and has no idea why. A casual fan sees a coach change a formation and doesn't register that anything happened at all. A tactical fan watching the same moment is frustrated that broadcast commentary never explains the actual tactical logic. 
 
 None of these fans speak the same football vocabulary, and most platforms — score trackers, fantasy apps, static dashboards — don't address comprehension at all. They report *what* happened. They never explain *why*, and they never adapt to *who is asking*.
@@ -40,7 +40,7 @@ A conversational interface where a fan selects their team, their football knowle
 
 ---
 
-## System Architecture
+## Your AI/Technical Approach
 
 Two pipelines, one shared backend:
 
@@ -92,6 +92,13 @@ Two pipelines, one shared backend:
 - **Docling**: Parses the 230-page IFAB Laws of the Game PDF into structured markdown using the `HybridChunker(max_tokens=512, merge_peers=True)` to respect document heading structure (e.g., keeping "Law 11 – Offside" as one retrievable unit).
 - **Langflow**: The visual orchestration layer. It manages routing queries to the correct tool, assembling prompts, and calling Granite. The exported `stratos_flow.json` makes the pipeline transparent.
 - **Context Forge**: The MCP gateway separating the tool server (`mcp_server.py`) from Langflow via a REST-registered gateway endpoint.
+- **IBM Bob**: Used as an AI coding assistant during scaffolding, specifically for bootstrapping FastAPI endpoints, MCP tool function structures, and React component layouts.
+
+---
+
+## Why Your Solution Matters in the Context of Racing
+
+Although Stratos was specifically built for the FIFA World Cup (June) track, its core concept—the translation of dense, split-second tactical decisions into adaptive, fan-friendly explanations—applies directly to F1 racing. Just as a football fan wonders why a manager shifted to a 5-4-1 formation, a racing fan wonders why a team principal ordered an early pit stop or switched tire compounds. Stratos demonstrates how IBM Granite and Langflow can ingest high-frequency event data (like F1 telemetry) and instantly output personalized, context-aware commentary, democratizing complex sports strategy across all domains.
 
 ---
 
