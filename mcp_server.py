@@ -4,16 +4,28 @@ from statsbombpy import sb
 import requests
 import sys
 
-mcp = FastMCP("Stratos_Server")
-chroma_client = chromadb.PersistentClient(path="./chroma_db")
-collection = chroma_client.get_or_create_collection(name="fifa_laws")
+# ponytail: bind to port 8012 to avoid conflict with gateway on 8000
+mcp = FastMCP("Stratos_Server", port=8012)
+
+# ponytail: try/except wrapping for resilient DB connection
+try:
+    chroma_client = chromadb.PersistentClient(path="./chroma_db")
+    collection = chroma_client.get_or_create_collection(name="fifa_laws")
+except Exception as e:
+    sys.stderr.write(f"Chroma DB initialization failed: {e}\n")
+    collection = None
 
 @mcp.tool()
 def query_football_laws(query: str) -> str:
     """Queries IFAB Laws vector DB."""
-    res = collection.query(query_texts=[query], n_results=3)
-    docs = res.get("documents", [[]])[0]
-    return "\n\n".join(docs) if docs else "No rules found."
+    if not collection:
+        return "Football laws search is currently unavailable (DB error)."
+    try:
+        res = collection.query(query_texts=[query], n_results=3)
+        docs = res.get("documents", [[]])[0]
+        return "\n\n".join(docs) if docs else "No rules found."
+    except Exception as e:
+        return f"Search error: {str(e)}"
 
 @mcp.tool()
 def get_tactical_timeline(match_id: int = 3869685) -> str:
