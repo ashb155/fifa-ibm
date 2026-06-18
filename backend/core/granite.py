@@ -64,7 +64,18 @@ User Query: {query}
 """
     
     try:
-        response = model.generate_text(prompt=prompt_template)
-        return response.strip()
+        # NOTE: The WatsonX API keys are not available right now. 
+        # When they are available, add them to the environment variables (.env).
+        # We will attempt generation; if credentials are bad, it will raise an error.
+        import time
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                response = model.generate_text(prompt=prompt_template)
+                return response.strip()
+            except Exception as e:
+                if attempt == max_retries - 1:
+                    return f"Model generation failed after {max_retries} attempts: {str(e)}"
+                time.sleep(1) # simple fallback
     except Exception as e:
-        return f"Model generation failed: {str(e)}"
+        return f"Setup failed: {str(e)}"
