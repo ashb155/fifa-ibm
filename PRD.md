@@ -1,7 +1,7 @@
 # Stratos: Football, Understood
 ### Product Requirements & Implementation Document
 **IBM AI Builders Challenge — June 2026 Innovation Challenge**
-**Author:** Aneesh Venkatesha Rao (Solo Developer)
+**Authors:** Aneesh Venkatesha Rao & Ashutosh Bhat
 **Deadline:** June 30, 2026, 11:59 PM ET
 **Document Date:** June 18, 2026 (12 days remaining)
 
