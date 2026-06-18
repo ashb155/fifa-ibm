@@ -42,7 +42,7 @@ def generate_response(query: str, context: str, persona: str = "casual") -> str:
     }
     
     model = ModelInference(
-        model_id="ibm/granite-3-8b-instruct",
+        model_id="meta-llama/llama-3-3-70b-instruct",
         credentials=credentials,
         project_id=project_id,
         params={
