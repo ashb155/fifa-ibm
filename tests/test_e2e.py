@@ -19,8 +19,8 @@ try:
     print(f"Status: {r.status_code}, Response: {r.json()}")
     if r.status_code != 200: errors += 1
 
-    print("Testing /timeline/123...")
-    r = requests.get("http://127.0.0.1:8000/timeline/123")
+    print("Testing /timeline/3869685...")
+    r = requests.get("http://127.0.0.1:8000/timeline/3869685")
     print(f"Status: {r.status_code}, Response: {r.json()}")
     if r.status_code != 200: errors += 1
 

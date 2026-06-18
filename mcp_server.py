@@ -1,8 +1,11 @@
 from mcp.server.fastmcp import FastMCP
+from dotenv import load_dotenv
 import chromadb
 from statsbombpy import sb
 import requests
 import os
+
+load_dotenv()
 
 # ponytail: bind to port 8012 to avoid conflict with gateway on 8000
 mcp = FastMCP("Stratos_Server", port=8012)
@@ -11,8 +14,10 @@ mcp = FastMCP("Stratos_Server", port=8012)
 try:
     chroma_client = chromadb.PersistentClient(path="./chroma_db")
     collection = chroma_client.get_or_create_collection(name="fifa_laws")
+    team_profiles_collection = chroma_client.get_or_create_collection(name="team_profiles")
 except Exception:
     collection = None
+    team_profiles_collection = None
 
 @mcp.tool()
 def query_football_laws(query: str) -> str:
@@ -23,6 +28,18 @@ def query_football_laws(query: str) -> str:
         res = collection.query(query_texts=[query], n_results=3)
         docs = res.get("documents", [[]])[0]
         return "\n\n".join(docs) if docs else "No rules found."
+    except Exception as e:
+        return f"Search error: {str(e)}"
+
+@mcp.tool()
+def query_team_profile(team_name: str) -> str:
+    """Queries team tactical profiles DB."""
+    if not team_profiles_collection:
+        return "Team profile search is currently unavailable (DB error)."
+    try:
+        res = team_profiles_collection.query(query_texts=[team_name], n_results=1)
+        docs = res.get("documents", [[]])[0]
+        return docs[0] if docs else f"No profile found for team {team_name}."
     except Exception as e:
         return f"Search error: {str(e)}"
 

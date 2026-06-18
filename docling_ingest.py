@@ -5,7 +5,7 @@ from docling.chunking import HybridChunker
 # ponytail: docling used strictly to satisfy hackathon requirement.
 def ingest():
     converter = DocumentConverter()
-    result = converter.convert("laws.md")
+    result = converter.convert("docs/laws.md")
     
     chunker = HybridChunker(max_tokens=512, merge_peers=True)
     chunks = list(chunker.chunk(result.document))

@@ -1,8 +1,19 @@
 import os
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import httpx
+import sys
+
+load_dotenv()
+
+# ponytail: ensure root is in path for mcp_server import
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+try:
+    from mcp_server import get_live_match_context, get_tactical_timeline
+except ImportError:
+    pass
 
 app = FastAPI(title="Stratos Backend")
 
@@ -32,13 +43,19 @@ async def update_session(session_id: str, data: dict):
 
 @app.get("/match/current")
 async def get_current_match():
-    # Placeholder for Football-Data.org live match
-    return {"status": "live", "match": "Example Match"}
+    try:
+        res = get_live_match_context(match_id="538164") # example id
+        return {"status": "live", "match": res}
+    except Exception as e:
+        return {"status": "error", "match": str(e)}
 
 @app.get("/timeline/{match_id}")
 async def get_timeline(match_id: str):
-    # Placeholder for StatsBomb timeline
-    return {"timeline": []}
+    try:
+        res = get_tactical_timeline(match_id=int(match_id))
+        return {"timeline": res}
+    except Exception as e:
+        return {"timeline": f"Error: {str(e)}"}
 
 @app.post("/chat")
 async def chat(request: ChatRequest):
@@ -76,7 +93,29 @@ async def chat(request: ChatRequest):
                 "source": "Langflow Orchestration (Granite + Context Forge)"
             }
     except Exception as e:
-        return {
-            "response": f"Error calling Langflow API: {str(e)}\nPlease ensure Langflow is running and stratos_flow.json is imported.",
-            "source": "Error"
-        }
+        print(f"Langflow failed: {e}. Falling back to direct Granite.")
+        try:
+            from backend.core.granite import generate_response
+            import chromadb
+            
+            context = ""
+            try:
+                chroma_client = chromadb.PersistentClient(path="./chroma_db")
+                team_col = chroma_client.get_collection(name="team_profiles")
+                res = team_col.query(query_texts=[request.query], n_results=1)
+                docs = res.get("documents", [[]])[0]
+                if docs:
+                    context = docs[0]
+            except Exception as db_e:
+                print(f"Chroma fallback failed: {db_e}")
+                
+            fallback_response = generate_response(request.query, request.persona, request.language, context)
+            return {
+                "response": fallback_response,
+                "source": "Direct Granite Fallback"
+            }
+        except Exception as fallback_e:
+            return {
+                "response": f"Error calling Langflow API and fallback failed: {str(e)}\nFallback error: {str(fallback_e)}",
+                "source": "Error"
+            }

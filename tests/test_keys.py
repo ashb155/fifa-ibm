@@ -1,4 +1,6 @@
 import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from dotenv import load_dotenv
 import requests
 
@@ -17,7 +19,7 @@ def test_football_data():
 
 def test_watsonx():
     from backend.core.granite import generate_response
-    res = generate_response("Say hello", "No context", "casual")
+    res = generate_response("Say hello", "casual", "English", "No context")
     if "Error" in res or "failed" in res.lower():
         return f"WatsonX API Key: FAILED ({res})"
     return f"WatsonX API Key: OK (Response: '{res[:30]}...')"

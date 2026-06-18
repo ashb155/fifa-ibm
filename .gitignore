@@ -6,3 +6,5 @@ __pycache__/
 chroma_db/
 mcp.db*
 payload.json
+install_skills.py
+scripts/

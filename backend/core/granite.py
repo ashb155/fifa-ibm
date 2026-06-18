@@ -1,79 +1,58 @@
 import os
-from ibm_watsonx_ai.foundation_models import ModelInference
+from typing import Optional
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# ponytail: minimal dictionary for prompts, no class abstraction needed.
-# NLP language handling: model instructed to mirror user's language.
-SYSTEM_PROMPTS = {
-    "beginner": (
-        "You are a helpful, friendly football companion. "
-        "Explain events and rules in simple terms, avoiding heavy jargon. "
-        "Focus on the core of what happened. "
-        "Always respond in the exact same language the user uses."
-    ),
-    "casual": (
-        "You are an engaging football companion. "
-        "Use standard broadcast-level terminology. Provide a good balance of narrative and basic tactics. "
-        "Always respond in the exact same language the user uses."
-    ),
-    "tactical": (
-        "You are an expert football analyst. "
-        "Provide deep tactical insights, focus on formation shifts, player roles, and precise data points. "
-        "Use high-level analytical language. "
-        "Always respond in the exact same language the user uses."
-    )
-}
+def generate_response(query: str, persona: str, language: str, context: str, history: list = None) -> str:
+    """
+    Calls the IBM Granite API (ibm/granite-3-8b-instruct) to generate an adaptive response.
+    """
+    api_key = os.getenv("WATSONX_API_KEY", "")
+    project_id = os.getenv("WATSONX_PROJECT_ID", "")
+    url = os.getenv("WATSONX_URL", "https://jp-tok.ml.cloud.ibm.com").rstrip("/")
 
-def generate_response(query: str, context: str, persona: str = "casual") -> str:
-    """Queries IBM Granite with dynamic persona prompts and RAG context."""
-    
-    api_key = os.getenv("WATSONX_API_KEY")
-    project_id = os.getenv("WATSONX_PROJECT_ID")
-    url = os.getenv("WATSONX_URL", "https://us-south.ml.cloud.ibm.com")
-    
-    if not (api_key and project_id):
-        return "Error: Missing WatsonX credentials. Please check your environment variables."
-        
-    credentials = {
-        "url": url,
-        "apikey": api_key
+    # Define system prompts based on Persona
+    system_prompts = {
+        "beginner": "You are a friendly and encouraging football companion. Explain the user's query with zero jargon. Use simple analogies. Keep the response under 90 words. Always end with a simple follow-up question to keep the user engaged.",
+        "casual": "You are a knowledgeable but accessible football companion. Answer the user's query in a conversational tone. If you use a football term, briefly define it. Keep the response under 150 words.",
+        "tactical": "You are an elite football tactical analyst. Answer the user's query using full football terminology (e.g., xG, half-spaces, low block, transitions). Provide deep tactical insight based on the provided context. Keep the response under 200 words."
     }
-    
-    model = ModelInference(
-        model_id="meta-llama/llama-3-3-70b-instruct",
-        credentials=credentials,
-        project_id=project_id,
-        params={
-            "max_new_tokens": 512,
-            "temperature": 0.7
-        }
-    )
-    
-    system_prompt = SYSTEM_PROMPTS.get(persona.lower(), SYSTEM_PROMPTS["casual"])
-    
-    prompt_template = f"""<|system|>
-{system_prompt}
-<|user|>
-Context provided by tools:
-{context}
 
-User Query: {query}
-<|assistant|>
-"""
+    persona = persona.lower()
+    system_instruction = system_prompts.get(persona, system_prompts["casual"])
     
-    # NOTE: The WatsonX API keys are not available right now. 
-    # When they are available, add them to the environment variables (.env).
-    # We will attempt generation; if credentials are bad, it will raise an error.
-    import time
-    max_retries = 3
-    for attempt in range(max_retries):
-        try:
-            response = model.generate_text(prompt=prompt_template)
-            return response.strip()
-        except Exception as e:
-            if attempt == max_retries - 1:
-                return f"Model generation failed after {max_retries} attempts: {str(e)}"
-            time.sleep(1) # simple fallback
-    return "Error: Unexpected loop exit"
+    # Assembly
+    full_prompt = f"<|start_of_role|>system<|end_of_role|>{system_instruction}\nOutput Language: {language}"
+    if context:
+        full_prompt += f"\nContext: {context}"
+    full_prompt += f"<|start_of_role|>user<|end_of_role|>{query}<|start_of_role|>assistant<|end_of_role|>"
+
+    # Use the SDK to avoid raw REST routing issues
+    try:
+        from ibm_watsonx_ai.foundation_models import ModelInference
+        from ibm_watsonx_ai.metanames import GenTextParamsMetaNames as GenParams
+        from ibm_watsonx_ai import Credentials
+
+        credentials = Credentials(
+            url=url,
+            api_key=api_key,
+        )
+
+        parameters = {
+            GenParams.DECODING_METHOD: "greedy",
+            GenParams.MAX_NEW_TOKENS: 250,
+            GenParams.REPETITION_PENALTY: 1.05
+        }
+
+        model = ModelInference(
+            model_id="meta-llama/llama-3-3-70b-instruct",
+            params=parameters,
+            credentials=credentials,
+            project_id=project_id
+        )
+
+        response = model.generate_text(prompt=full_prompt)
+        return response.strip()
+    except Exception as e:
+        return f"IBM Granite generation failed: {str(e)}"
