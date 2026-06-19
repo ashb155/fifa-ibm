@@ -1,7 +1,8 @@
 from mcp.server.fastmcp import FastMCP
 from dotenv import load_dotenv
 import chromadb
-from statsbombpy import sb
+import urllib.request
+import json
 import requests
 import os
 
@@ -46,20 +47,35 @@ def query_team_profile(team_name: str) -> str:
 @mcp.tool()
 def get_tactical_timeline(match_id: int = 3869685) -> str:
     """Fetches tactical shifts and substitutions for a match. Default match_id is 2022 World Cup Final."""
+    url = f"https://raw.githubusercontent.com/statsbomb/open-data/master/data/events/{match_id}.json"
     try:
-        df = sb.events(match_id=match_id)
-        if 'type' not in df.columns: return "No events."
-        
-        # ponytail: pandas dataframe filtering, fastest path
-        df = df[df['type'].isin(['Substitution', 'Tactical Shift'])].sort_values(['minute', 'second'])
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req) as response:
+            events = json.loads(response.read().decode("utf-8"))
+            
+        filtered = []
+        for e in events:
+            type_name = e.get("type", {}).get("name")
+            if type_name in ["Substitution", "Tactical Shift"]:
+                filtered.append(e)
+                
+        # Sort by minute, second
+        filtered.sort(key=lambda x: (x.get("minute", 0), x.get("second", 0)))
         
         out = []
-        for _, r in df.iterrows():
-            if r['type'] == 'Substitution':
-                out.append(f"{r['minute']}' - {r.get('team')}: {r.get('player')} out, {r.get('substitution_replacement')} in")
-            else:
-                fmt = r.get('tactics', {}).get('formation') if isinstance(r.get('tactics'), dict) else 'Unknown'
-                out.append(f"{r['minute']}' - {r.get('team')}: Formation shift to {fmt}")
+        for e in filtered:
+            minute = e.get("minute", 0)
+            type_name = e.get("type", {}).get("name")
+            team = e.get("team", {}).get("name", "Unknown")
+            
+            if type_name == "Substitution":
+                player = e.get("player", {}).get("name", "Unknown")
+                replacement = e.get("substitution", {}).get("replacement", {}).get("name", "Unknown")
+                out.append(f"{minute}' - {team}: {player} out, {replacement} in")
+            elif type_name == "Tactical Shift":
+                formation = e.get("tactics", {}).get("formation", "Unknown")
+                out.append(f"{minute}' - {team}: Formation shift to {formation}")
+                
         return "\n".join(out) or "No shifts."
     except Exception as e:
         return f"Service unavailable (StatsBomb API error: {str(e)})"

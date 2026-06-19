@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import patch, MagicMock, AsyncMock
 from fastapi.testclient import TestClient
+import json
 
 import os
 # Mock os environment variables before importing modules
@@ -12,7 +13,7 @@ os.environ["WATSONX_PROJECT_ID"] = "mock_project_id"
 # Import our backend components
 from backend.main import app
 from mcp_server import query_football_laws, get_tactical_timeline, get_live_match_context
-from backend.core.granite import generate_response
+from backend.core.watsonx_client import generate_response
 
 class TestFastAPIEndpoints(unittest.TestCase):
     def setUp(self):
@@ -49,12 +50,15 @@ class TestFastAPIEndpoints(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["response"], "Langflow mock response")
 
+    @patch('backend.core.watsonx_client.generate_response')
     @patch('httpx.AsyncClient.post', new_callable=AsyncMock)
-    def test_chat_failure(self, mock_post):
+    def test_chat_failure(self, mock_post, mock_gen):
         mock_post.side_effect = Exception("Connection Refused")
+        mock_gen.return_value = "Fallback response"
         response = self.client.post("/chat", json={"query": "Hello"})
         self.assertEqual(response.status_code, 200)
-        self.assertTrue("Error calling Langflow API" in response.json()["response"])
+        self.assertEqual(response.json()["response"], "Fallback response")
+        self.assertEqual(response.json()["source"], "Direct Granite Fallback")
 
 
 class TestMCPTools(unittest.TestCase):
@@ -69,19 +73,28 @@ class TestMCPTools(unittest.TestCase):
         res = query_football_laws("What is offside?")
         self.assertEqual(res, "Football laws search is currently unavailable (DB error).")
 
-    @patch('mcp_server.sb.events')
-    def test_get_tactical_timeline(self, mock_events):
-        import pandas as pd
-        df = pd.DataFrame({
-            'type': ['Substitution', 'Tactical Shift'],
-            'minute': [45, 60],
-            'second': [0, 30],
-            'team': ['A', 'B'],
-            'player': ['Player1', None],
-            'substitution_replacement': ['Player2', None],
-            'tactics': [None, {'formation': '4-4-2'}]
-        })
-        mock_events.return_value = df
+    @patch('urllib.request.urlopen')
+    def test_get_tactical_timeline(self, mock_urlopen):
+        mock_response = MagicMock()
+        mock_data = [
+            {
+                "type": {"name": "Substitution"},
+                "minute": 45,
+                "second": 0,
+                "team": {"name": "A"},
+                "player": {"name": "Player1"},
+                "substitution": {"replacement": {"name": "Player2"}}
+            },
+            {
+                "type": {"name": "Tactical Shift"},
+                "minute": 60,
+                "second": 30,
+                "team": {"name": "B"},
+                "tactics": {"formation": "4-4-2"}
+            }
+        ]
+        mock_response.read.return_value = json.dumps(mock_data).encode('utf-8')
+        mock_urlopen.return_value.__enter__.return_value = mock_response
         
         res = get_tactical_timeline(123)
         self.assertIn("45' - A: Player1 out, Player2 in", res)
@@ -100,11 +113,11 @@ class TestMCPTools(unittest.TestCase):
 
 
 class TestGranite(unittest.TestCase):
-    @patch('backend.core.granite.ModelInference')
+    @patch('ibm_watsonx_ai.foundation_models.ModelInference')
     def test_generate_response(self, mock_model_inference):
         mock_model = MagicMock()
         mock_model.generate_text.return_value = "Mock Granite Response "
         mock_model_inference.return_value = mock_model
         
-        res = generate_response("Query", "Context", "casual")
+        res = generate_response("Query", "casual", "English", "Context")
         self.assertEqual(res, "Mock Granite Response")
