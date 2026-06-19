@@ -2,13 +2,13 @@
 
 ## General Overview
 - **Manager**: Luis de la Fuente
-- **Key Players**: Rodri, Pedri, Lamine Yamal, Nico Williams
+- **Key Players**: David Raya, Unai Simón, Joan García, Aymeric Laporte, Cucurella, Alejandro Grimaldo, Pedro Porro, Eric García, Marc Pubill, Pau Cubarsí, Fabián Ruiz, Marcos Llorente, Rodri, Mikel Merino, Dani Olmo, Ferrán Torres, Martín Zubimendi, Pedri, Pablo Gavira, Mikel Oyarzabal, Álex Baena, Borja Iglesias, Yeremi Pino, Nico Williams, Lamine Yamal, Víctor Muñoz
 - **Preferred Formation**: 4-3-3
-- **Tactical Identity**: Tiki-taka evolved. Rapid circulation of the ball with pure wingers stretching the defense.
+- **Tactical Identity**: Balanced tactical approach.
 
 ## Tactical Breakdown
 ### Attacking Phase
-Spain implements a patient build-up and positional play approach. Operating primarily in a 4-3-3 shape, the midfield looks to establish dominance early. When progressing the ball, they look for Rodri to act as the primary catalyst.
+Spain implements a patient build-up and positional play approach. Operating primarily in a 4-3-3 shape, the midfield looks to establish dominance early. When progressing the ball, they look for David Raya to act as the primary catalyst.
 
 ### Defensive Structure
 Defensively, they utilize a disciplined mid/low block. The defensive line coordinates closely with the midfield pivot to deny space between the lines. Luis de la Fuente demands extreme discipline out of possession.

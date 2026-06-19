@@ -1,10 +1,14 @@
 import os
+import sys
+import uuid
+from typing import List, Dict, Optional
+
+
+import httpx
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import httpx
-import sys
 
 load_dotenv()
 
@@ -15,35 +19,116 @@ try:
 except ImportError:
     pass
 
-app = FastAPI(title="Stratos Backend")
+# --- OpenAPI metadata ---
+tags_metadata = [
+    {"name": "health", "description": "Service health checks"},
+    {"name": "session", "description": "Session management"},
+    {"name": "match", "description": "Live match data"},
+    {"name": "timeline", "description": "Tactical timeline data"},
+    {"name": "chat", "description": "AI chat interface"},
+]
+
+app = FastAPI(
+    title="Stratos Backend",
+    description="AI-powered FIFA World Cup companion API — tactical analysis, live match context, and adaptive chat.",
+    version="0.1.0",
+    openapi_tags=tags_metadata,
+)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# --- Pydantic request models ---
+
 class ChatRequest(BaseModel):
     query: str
     persona: str = "casual"
     language: str = "English"
+    history: Optional[List[Dict[str, str]]] = None
 
-@app.get("/")
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "query": "What is the offside rule?",
+                    "persona": "beginner",
+                    "language": "English",
+                    "history": [],
+                }
+            ]
+        }
+    }
+
+class SessionCreate(BaseModel):
+    team: str
+    knowledge_level: str
+    language: str
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "team": "Argentina",
+                    "knowledge_level": "casual",
+                    "language": "English",
+                }
+            ]
+        }
+    }
+
+# --- Pydantic response models ---
+
+class SessionResponse(BaseModel):
+    session_id: str
+    status: str
+    message: str
+
+class ChatResponse(BaseModel):
+    response: str
+    source: str
+
+class MatchResponse(BaseModel):
+    status: str
+    match: str
+
+class TimelineResponse(BaseModel):
+    timeline: str
+
+# --- Initialize ChromaDB collection globally to avoid severe disk I/O lag on every request ---
+from backend.core.db import get_collection, chroma_client
+team_col = get_collection("team_profiles")
+
+# --- Endpoints ---
+
+@app.get("/", tags=["health"])
 async def root():
     return {
         "status": "online",
         "message": "Go to /docs to test endpoints."
     }
 
-import uuid
-class SessionCreate(BaseModel):
-    team: str
-    knowledge_level: str
-    language: str
+@app.get("/health", tags=["health"])
+async def health():
+    return {
+        "status": "healthy",
+        "chroma_db": chroma_client is not None,
+        "services": {
+            "langflow": os.getenv("LANGFLOW_API_URL", "http://127.0.0.1:7860/api/v1/run/Stratos"),
+            "watsonx": bool(os.getenv("WATSONX_API_KEY")),
+        },
+    }
 
-@app.post("/session/create")
+@app.post("/session/create", response_model=SessionResponse, tags=["session"])
 async def create_session(session: SessionCreate):
     # The backend is fully stateless. State is maintained by React Context in the frontend.
     # This endpoint satisfies the PRD API spec and provides a unique ID for the frontend to track.
@@ -53,7 +138,7 @@ async def create_session(session: SessionCreate):
         "message": "Session created. Please pass language and persona in /chat payloads."
     }
 
-@app.get("/match/current")
+@app.get("/match/current", response_model=MatchResponse, tags=["match"])
 async def get_current_match():
     try:
         res = await get_nearest_world_cup_match()
@@ -61,7 +146,7 @@ async def get_current_match():
     except Exception as e:
         return {"status": "error", "match": str(e)}
 
-@app.get("/timeline/{match_id}")
+@app.get("/timeline/{match_id}", response_model=TimelineResponse, tags=["timeline"])
 async def get_timeline(match_id: str):
     try:
         res = await get_tactical_timeline(match_id=int(match_id))
@@ -69,7 +154,7 @@ async def get_timeline(match_id: str):
     except Exception as e:
         return {"timeline": f"Error: {str(e)}"}
 
-@app.post("/chat")
+@app.post("/chat", response_model=ChatResponse, tags=["chat"])
 async def chat(request: ChatRequest):
     # Call the Langflow REST API instead of bypassing it
     langflow_url = os.getenv("LANGFLOW_API_URL", "http://127.0.0.1:7860/api/v1/run/Stratos")
@@ -88,13 +173,11 @@ async def chat(request: ChatRequest):
     
     try:
         async with httpx.AsyncClient() as client:
-            # Note: Awaiting Langflow to process the flow
-            lf_response = await client.post(langflow_url, json=payload, timeout=60.0)
+            # Reduced timeout from 60s to 5s so the fallback kicks in almost instantly if Langflow is offline
+            lf_response = await client.post(langflow_url, json=payload, timeout=5.0)
             lf_response.raise_for_status()
             result = lf_response.json()
             
-            # Extract response from Langflow output format
-            # This is a safe parsing logic depending on Langflow's nested JSON
             try:
                 message = result["outputs"][0]["outputs"][0]["results"]["message"]["text"]
             except KeyError:
@@ -108,20 +191,18 @@ async def chat(request: ChatRequest):
         print(f"Langflow failed: {e}. Falling back to direct Granite.")
         try:
             from backend.core.watsonx_client import generate_response
-            import chromadb
             
             context = ""
-            try:
-                chroma_client = chromadb.PersistentClient(path="./chroma_db")
-                team_col = chroma_client.get_collection(name="team_profiles")
-                res = team_col.query(query_texts=[request.query], n_results=1)
-                docs = res.get("documents", [[]])[0]
-                if docs:
-                    context = docs[0]
-            except Exception as db_e:
-                print(f"Chroma fallback failed: {db_e}")
+            if team_col:
+                try:
+                    res = team_col.query(query_texts=[request.query], n_results=1)
+                    docs = res.get("documents", [[]])[0]
+                    if docs:
+                        context = docs[0]
+                except Exception as db_e:
+                    print(f"Chroma query failed: {db_e}")
                 
-            fallback_response = generate_response(request.query, request.persona, request.language, context)
+            fallback_response = generate_response(request.query, request.persona, request.language, context, request.history)
             return {
                 "response": fallback_response,
                 "source": "Direct Granite Fallback"

@@ -1,23 +1,18 @@
 from mcp.server.fastmcp import FastMCP
 from dotenv import load_dotenv
-import chromadb
-import json
 import httpx
 import os
 
 load_dotenv()
 
-# ponytail: bind to port 8012 to avoid conflict with gateway on 8000
+# ponytail: bind to port 8012 to avoid conflict with gateway on 8000 — 7 MCP tools
 mcp = FastMCP("Stratos_Server", port=8012)
 
-# ponytail: try/except wrapping for resilient DB connection
-try:
-    chroma_client = chromadb.PersistentClient(path="./chroma_db")
-    collection = chroma_client.get_or_create_collection(name="fifa_laws")
-    team_profiles_collection = chroma_client.get_or_create_collection(name="team_profiles")
-except Exception:
-    collection = None
-    team_profiles_collection = None
+from backend.core.db import get_collection
+
+# ponytail: try/except wrapping for resilient DB connection handled by db.py now
+collection = get_collection("fifa_laws")
+team_profiles_collection = get_collection("team_profiles")
 
 @mcp.tool()
 def query_football_laws(query: str) -> str:
@@ -34,6 +29,8 @@ def query_football_laws(query: str) -> str:
 @mcp.tool()
 def query_team_profile(team_name: str) -> str:
     """Queries team tactical profiles DB."""
+    if not team_name or not team_name.strip():
+        return "Error: team_name must be a non-empty string."
     if not team_profiles_collection:
         return "Team profile search is currently unavailable (DB error)."
     try:
@@ -46,9 +43,11 @@ def query_team_profile(team_name: str) -> str:
 @mcp.tool()
 async def get_tactical_timeline(match_id: int = 3869685) -> str:
     """Fetches tactical shifts and substitutions for a match. Default match_id is 2022 World Cup Final."""
+    if match_id <= 0:
+        return "Error: match_id must be a positive integer."
     url = f"https://raw.githubusercontent.com/statsbomb/open-data/master/data/events/{match_id}.json"
     try:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.get(url, headers={"User-Agent": "Mozilla/5.0"})
             response.raise_for_status()
             events = response.json()
@@ -77,10 +76,12 @@ async def get_tactical_timeline(match_id: int = 3869685) -> str:
 @mcp.tool()
 async def get_live_match_context(match_id: str) -> str:
     """Fetches real-time match data from Football-Data.org"""
+    if not match_id or not match_id.strip():
+        return "Error: match_id must be a non-empty string."
     try:
         api_key = os.getenv("FOOTBALL_DATA_ORG_KEY")
         if not api_key: return "Error: API key missing"
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=10.0) as client:
             r = await client.get(f"https://api.football-data.org/v4/matches/{match_id}", headers={"X-Auth-Token": api_key})
             if r.status_code != 200: return f"Error: {r.status_code}"
             
@@ -95,7 +96,7 @@ async def get_competition_standings(competition_id: str) -> str:
     try:
         api_key = os.getenv("FOOTBALL_DATA_ORG_KEY")
         if not api_key: return "Error: API key missing"
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=10.0) as client:
             r = await client.get(f"https://api.football-data.org/v4/competitions/{competition_id}/standings", headers={"X-Auth-Token": api_key})
             if r.status_code != 200: return f"Error: {r.status_code}"
             
@@ -121,7 +122,7 @@ async def get_team_matches(team_id: str, status: str = "SCHEDULED") -> str:
     try:
         api_key = os.getenv("FOOTBALL_DATA_ORG_KEY")
         if not api_key: return "Error: API key missing"
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=10.0) as client:
             r = await client.get(f"https://api.football-data.org/v4/teams/{team_id}/matches?status={status}&limit=5", headers={"X-Auth-Token": api_key})
             if r.status_code != 200: return f"Error: {r.status_code}"
             
@@ -145,7 +146,7 @@ async def get_nearest_world_cup_match() -> str:
     try:
         api_key = os.getenv("FOOTBALL_DATA_ORG_KEY")
         if not api_key: return "Error: API key missing"
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=10.0) as client:
             r = await client.get("https://api.football-data.org/v4/competitions/WC/matches?status=LIVE", headers={"X-Auth-Token": api_key})
             r.raise_for_status()
             matches = r.json().get("matches", [])

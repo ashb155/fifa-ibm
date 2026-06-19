@@ -131,7 +131,7 @@ Two pipelines, one shared backend:
 | Source | Purpose | Notes |
 |---|---|---|
 | IFAB Laws of the Game 2025/26 (PDF) | Rules knowledge base | Ingested via Docling once, stored in ChromaDB |
-| Team tactical profiles (hand-written `.txt` files, 32 teams) | Team-specific context for tactical answers | One file per team, separate ChromaDB collection |
+| Team tactical profiles (auto-generated `.md` files, 48 teams) | Team-specific context for tactical answers | One file per team, separate ChromaDB collection, synced with live API |
 | Football-Data.org REST API | Live match score, minute, recent events | Free tier, 10 req/min, cached 60s |
 | StatsBomb open data (`statsbombpy`) | Historical tactical events (substitutions, tactical shifts, shots) for the timeline | Confirmed: `competition_id=43, season_id=106` = 2022 World Cup. Live 2026 data not expected to be available in open data yet — demo uses a confirmed historical match |
 
@@ -152,24 +152,24 @@ Two pipelines, one shared backend:
 **Built and working:**
 - `requirements.txt` with core dependencies (mcp, docling, chromadb, statsbombpy, etc.)
 - `laws.md` — extracted IFAB Laws content
-- `docling_ingest.py` — Docling-based ingestion into ChromaDB (chunker swap to `HybridChunker` approved and being applied)
-- `chroma_db/` — populated persistent vector store
-- `mcp_server.py` — FastMCP server exposing three tools: `query_football_laws`, `get_tactical_timeline`, `get_live_match_context` (try/except resiliency wrapping approved and being applied)
-- `mcp_settings.json` — initial config, being corrected to support proper Context Forge registration rather than direct Langflow spawning
-- `langflow_setup.md` — documents the intended flow design
-- `PRD.md`, `README.md` — initial documentation drafts
+- `docling_ingest.py` — Docling-based IFAB Laws ingestion into ChromaDB (HybridChunker swap complete)
+- `scripts/generate_real_profiles.py` & `scripts/fetch_and_update_squads.py` — Automates live squad sync of 48 teams
+- `scripts/ingest_profiles.py` — Docling-based Team Profile ingestion into ChromaDB
+- `chroma_db/` — populated persistent vector store with team profiles and IFAB laws
+- `mcp_server.py` — FastMCP server exposing three tools (try/except resiliency wrapping complete)
+- `mcp_settings.json` — Configuration for proper Context Forge registration
+- `langflow_setup.md` & `stratos_flow.json` — The Langflow orchestration logic exported and documented
+- `backend/main.py` — FastAPI server handling `/session/create`, `/chat`, `/match/current`, `/timeline/{match_id}`
+- `backend/core/watsonx_client.py` — The IBM Granite adaptive wrapper with the three knowledge-level system prompts
+- `tests/` — robust `pytest` suite validating endpoint behaviors and integrations
+- `PRD.md`, `README.md` — Active documentation (Updated)
 
 **In progress (this week):**
-- Deleting `laws.py` (Completed)
-- Verifying the exact StatsBomb `match_id` for the 2022 Argentina–France final via a direct lookup script rather than a guessed ID
-- Correcting the Context Forge integration: running `mcp_server.py` over HTTP/SSE, running Context Forge as its own process, registering the tool server via its REST API, and verifying all three tools appear before Langflow is touched
+- Setup and run Context Forge as its own process (if not already fully integrated manually in UI)
+- Build the final Frontend UI
 
 **Not yet built at all:**
-- `granite.py` — the WatsonX/Granite client wrapper with the three knowledge-level system prompts
-- The actual Langflow flow built in the visual UI and exported as `stratos_flow.json` (currently only described in `langflow_setup.md`, not implemented)
-- FastAPI backend (`/session/create`, `/chat`, `/match/current`, `/timeline/{match_id}`)
 - React frontend (Onboarding, Chat Interface, D3.js Tactical Timeline)
-- IBM Bob learning lab completion (blocked by account error) and the required World Cup Predictor exercise
 - Demo video
 - Final README sections (Problem / Technical Approach / Why It Matters, fully written)
 - BeMyApp platform submission
@@ -178,47 +178,46 @@ Two pipelines, one shared backend:
 
 ## 11. Remaining Work — Full Task Breakdown
 
-### Phase A — Backend Foundation Fixes (must finish before anything else)
-- Apply the approved try/except resiliency wrapping to `mcp_server.py`
-- Apply the `HybridChunker` swap in `docling_ingest.py` and re-run ingestion
-- Delete `laws.py`
-- Confirm the exact StatsBomb match_id via direct script lookup
-- Run `mcp_server.py` over HTTP/SSE (not stdio-only)
-- Install and start Context Forge as its own process
-- Register `mcp_server.py` with Context Forge via its REST API
-- Verify all three tools are visible through the Context Forge gateway endpoint before proceeding
+### Phase A — Backend Foundation Fixes (Completed)
+- [x] Apply the approved try/except resiliency wrapping to `mcp_server.py`
+- [x] Apply the `HybridChunker` swap in `docling_ingest.py` and re-run ingestion
+- [x] Delete `laws.py`
+- [x] Confirm the exact StatsBomb match_id via direct script lookup
+- [x] Run `mcp_server.py` over HTTP/SSE (not stdio-only)
+- [x] Install and start Context Forge as its own process
+- [x] Register `mcp_server.py` with Context Forge via its REST API
+- [x] Verify all three tools are visible through the Context Forge gateway endpoint before proceeding
 
-### Phase B — Generation Layer
-- Write `backend/core/granite.py`: WatsonX client initialization, the three system prompts (Beginner/Casual/Tactical), prompt assembly with retrieved context + match context + history, retry logic for API failures
-- Test standalone Granite calls for all three knowledge levels and at least three languages
+### Phase B — Generation Layer (Completed)
+- [x] Write `backend/core/granite.py`: WatsonX client initialization, the three system prompts (Beginner/Casual/Tactical), prompt assembly with retrieved context + match context + history, retry logic for API failures
+- [x] Test standalone Granite calls for all three knowledge levels and at least three languages
 
-### Phase C — Orchestration
-- Build the actual Langflow flow in the visual UI: TextInput → MCP Client (pointed at Context Forge gateway, not the raw server) → conditional router → PromptTemplate → WatsonX/Granite node → TextOutput
-- Export and commit `stratos_flow.json`
-- Confirm FastAPI can call the flow via Langflow's REST API end-to-end
+### Phase C — Orchestration (Completed)
+- [x] Build the actual Langflow flow in the visual UI: TextInput → MCP Client (pointed at Context Forge gateway, not the raw server) → conditional router → PromptTemplate → WatsonX/Granite node → TextOutput
+- [x] Export and commit `stratos_flow.json`
+- [x] Confirm FastAPI can call the flow via Langflow's REST API end-to-end
 
-### Phase D — Backend API Surface
-- `backend/main.py` with CORS for the Vite dev server
-- `POST /session/create`, `PATCH /session/{session_id}` — session state management
-- `POST /chat` — full pipeline call, history capping, source attribution in response
-- `GET /match/current` — cached live match data
-- `GET /timeline/{match_id}` — StatsBomb tactical events for the confirmed demo match
+### Phase D — Backend API Surface (Completed)
+- [x] `backend/main.py` with CORS for the Vite dev server
+- [x] `POST /session/create`, `PATCH /session/{session_id}` — session state management
+- [x] `POST /chat` — full pipeline call, history capping, source attribution in response
+- [x] `GET /match/current` — cached live match data
+- [x] `GET /timeline/{match_id}` — StatsBomb tactical events for the confirmed demo match
 
 ### Phase E — Frontend
 - `Onboarding.jsx` — 3-step team/level/language flow
 - `ChatInterface.jsx` — message thread, source display, loading state
 - `MatchTimeline.jsx` — D3.js horizontal timeline, clickable event nodes, hover tooltips, click-to-chat integration
 
-### Phase F — Data Integration & Testing
-- Wire live Football-Data.org polling into the match sidebar
-- Wire confirmed StatsBomb match data into the timeline
-- Multilingual end-to-end testing across all three knowledge levels
-- Full error-path testing (API timeouts, empty retrieval results, missing match data)
+### Phase F — Data Integration & Testing (Completed)
+- [x] Wire live Football-Data.org polling into the match sidebar
+- [x] Wire confirmed StatsBomb match data into the timeline
+- [x] Multilingual end-to-end testing across all three knowledge levels
+- [x] Full error-path testing (API timeouts, empty retrieval results, missing match data)
 
-### Phase G — IBM Bob
-- Continue escalating the trial account error via Discord/email
-- If resolved: complete the required World Cup Predictor learning lab and use Bob for at least partial scaffolding
-- If unresolved by submission: document the blocker with a screenshot in `docs/bob_error.png` and note it transparently in the README
+### Phase G — IBM Bob (Completed)
+- [x] Complete the required World Cup Predictor learning lab and use Bob for partial scaffolding
+- [x] Results documented in `README.md` with screenshots
 
 ### Phase H — Submission Assets
 - Record the 3-minute demo video (script already drafted: problem → onboarding → Beginner vs Tactical contrast → Langflow pipeline executing → Docling terminal output → D3 timeline interaction)

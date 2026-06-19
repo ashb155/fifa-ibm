@@ -1,17 +1,17 @@
 # Team Profile: Iran
+
+## General Overview
 - **Manager**: Amir Ghalenoei
-- **Key Player**: Mehdi Taremi
-- **Preferred Formation**: 4-4-2
-- **Tactical Identity**: Compact Defending & Target-Man Long Balls
+- **Key Players**: Hossein Hosseini, Payam Niazmand, Alireza Beiranvand, Ehsan Hajsafi, Ramin Rezaeian, Milad Mohammadi, Hossein Kanaanizadegan, Shojae Khalilzadeh, Rouzbeh Cheshmi, Saleh Hardani, Ali Nemati, Danial Eiri, Saeid Ezatolahi, Mehdi Torabi, Mohammad Ghorbani, Ariya Yousefi, Medhi Ghayedi, Amir Razzaghinia, Alireza Jahanbakhsh, Mehdi Taremi, Dennis Eckert, Ali Alipour, Shahriar Moghanlou, Mohammad Mohebi, Saman Ghoddos, Amir Hosseinzadeh
+- **Preferred Formation**: 4-3-3
+- **Tactical Identity**: Balanced tactical approach.
 
 ## Tactical Breakdown
-The Iran national team operates primarily under a 4-4-2 shape, focusing on a compact defending & target-man long balls style of play. 
+### Attacking Phase
+Iran implements a patient build-up and positional play approach. Operating primarily in a 4-3-3 shape, the midfield looks to establish dominance early. When progressing the ball, they look for Hossein Hosseini to act as the primary catalyst.
 
-### Offensive Phase
-During buildup, the manager Amir Ghalenoei instructs the team to look for Mehdi Taremi, who serves as the key reference point in transitions. Wing progression and midfield rotations are crucial to breaking down opposition blocks.
-
-### Defensive Phase
-When out of possession, they drop into a compact shape to deny space in between the lines. Depending on their style, they either trigger an aggressive counter-press or establish a disciplined low block.
+### Defensive Structure
+Defensively, they utilize a disciplined mid/low block. The defensive line coordinates closely with the midfield pivot to deny space between the lines. Amir Ghalenoei demands extreme discipline out of possession.
 
 ### Transitions
-Quick transitions from defense to attack are prioritized to catch opponents disorganized, leveraging the pace and playmaking ability of Mehdi Taremi.
+In transition moments, Iran excels at immediate reactions. Offensively, they target the half-spaces instantly upon regaining the ball. Defensively, they attempt to cut off passing lanes and delay the opposition to reform their 4-3-3 structure.

@@ -2,16 +2,16 @@
 
 ## General Overview
 - **Manager**: Hugo Broos
-- **Key Players**: Ronwen Williams, Themba Zwane
+- **Key Players**: Ronwen Williams, Sipho Chaine, Ricardo Goss, Aubrey Modiba, Nkosinathi Sibisi, Khuliso Mudau, Olwethu Makhanya, Bradley Cross, Samukelo Kabini, Ime Okon, Mbekezeli Mbokazi, Khulumani Ndamane, Tholo Matuludi, Themba Zwane, Teboho Mokoena, Sphephelo Sithole, Jayden Adams, Thapelo Maseko, Thalente Mbatha, Kamogelo Sebelebele, Lyle Foster, Oswin Appollis, Iqraam Rayners, Evidence Makgopa, Relebohile Mofokeng, Tshepang Moremi
 - **Preferred Formation**: 4-3-3
-- **Tactical Identity**: Possession-based attacking football
+- **Tactical Identity**: Balanced tactical approach.
 
 ## Tactical Breakdown
 ### Attacking Phase
-The team prefers to build from the back. Under the 4-3-3 formation, the fullbacks provide width while the central midfielders dictate the tempo. When facing high pressure, they can transition quickly.
+South Africa implements a patient build-up and positional play approach. Operating primarily in a 4-3-3 shape, the midfield looks to establish dominance early. When progressing the ball, they look for Ronwen Williams to act as the primary catalyst.
 
 ### Defensive Structure
-Defensively, South Africa maintains a structured shape. They press aggressively in the middle third to force turnovers. Against stronger opposition, they drop into a mid-block to limit space behind the defensive line.
+Defensively, they utilize a disciplined mid/low block. The defensive line coordinates closely with the midfield pivot to deny space between the lines. Hugo Broos demands extreme discipline out of possession.
 
 ### Transitions
-In offensive transitions, South Africa looks to exploit wide areas immediately. Defensively, they prefer counter-pressing to win the ball back high up the pitch before falling back into their established shape.
+In transition moments, South Africa excels at immediate reactions. Offensively, they target the half-spaces instantly upon regaining the ball. Defensively, they attempt to cut off passing lanes and delay the opposition to reform their 4-3-3 structure.

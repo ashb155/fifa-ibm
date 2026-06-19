@@ -1,17 +1,17 @@
 # Team Profile: DR Congo
 
 ## General Overview
-- **Manager**: National Coach of DR Congo
-- **Key Players**: Star Player of DR Congo, Key Defender for DR Congo
+- **Manager**: Sébastien Desabre
+- **Key Players**: Timothy Fayulu, Lionel Mpasi, Matthieu Epolo, Axel Tuanzebe, Chancel Mbemba, Aaron Wan-Bissaka, Arthur Masuaku, Joris Kayembe, Dylan Batubinsika, Gédéon Kalulu, Steve Kapuadi, Gaël Kakuta, Samuel Moutoussamy, Edo Kayembe, Aaron Tshibola, Charles Pickel, Noah Sadiki, Ngal'ayel Mukau, Yoane Wissa, Theo Bongonda, Cédric Bakambu, Simon Banza, Nathanael Mbuku, Meschack Elia, Brian Cipenga, Fiston Mayele
 - **Preferred Formation**: 4-3-3
-- **Tactical Identity**: Compact block and counter-attack
+- **Tactical Identity**: Balanced tactical approach.
 
 ## Tactical Breakdown
 ### Attacking Phase
-The team prefers to build from the back. Under the 4-3-3 formation, the fullbacks provide width while the central midfielders dictate the tempo. When facing high pressure, they can transition quickly.
+DR Congo implements a patient build-up and positional play approach. Operating primarily in a 4-3-3 shape, the midfield looks to establish dominance early. When progressing the ball, they look for Timothy Fayulu to act as the primary catalyst.
 
 ### Defensive Structure
-Defensively, DR Congo maintains a structured shape. They press aggressively in the middle third to force turnovers. Against stronger opposition, they drop into a mid-block to limit space behind the defensive line.
+Defensively, they utilize a disciplined mid/low block. The defensive line coordinates closely with the midfield pivot to deny space between the lines. Sébastien Desabre demands extreme discipline out of possession.
 
 ### Transitions
-In offensive transitions, DR Congo looks to exploit wide areas immediately. Defensively, they prefer counter-pressing to win the ball back high up the pitch before falling back into their established shape.
+In transition moments, DR Congo excels at immediate reactions. Offensively, they target the half-spaces instantly upon regaining the ball. Defensively, they attempt to cut off passing lanes and delay the opposition to reform their 4-3-3 structure.

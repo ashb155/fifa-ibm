@@ -112,7 +112,7 @@ Although Stratos was specifically built for the FIFA World Cup (June) track, its
 ## Data Sources
 
 - **IFAB Laws of the Game 2025/26 (PDF)**: Ingested via Docling once, stored in ChromaDB.
-- **Team tactical profiles**: Hand-written `.txt` files for 32 teams.
+- **Team tactical profiles**: Auto-generated Markdown profiles for all 48 World Cup teams, synced dynamically via the Football-Data.org API.
 - **Football-Data.org REST API**: Live match score, minute, recent events.
 - **StatsBomb open data (`statsbombpy`)**: Historical tactical events (substitutions, tactical shifts) for the timeline. Demo uses a confirmed historical match (2022 World Cup).
 

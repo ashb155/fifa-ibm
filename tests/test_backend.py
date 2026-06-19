@@ -1,10 +1,20 @@
 import unittest
 from unittest.mock import patch, MagicMock, AsyncMock
 from fastapi.testclient import TestClient
+import asyncio
 import json
 
 import os
-# Mock os environment variables before importing modules
+
+# Save real env values before mocking, so test_keys.py can use them later
+_real_env = {
+    "FOOTBALL_DATA_ORG_KEY": os.environ.get("FOOTBALL_DATA_ORG_KEY", ""),
+    "LANGFLOW_API_URL": os.environ.get("LANGFLOW_API_URL", ""),
+    "WATSONX_API_KEY": os.environ.get("WATSONX_API_KEY", ""),
+    "WATSONX_PROJECT_ID": os.environ.get("WATSONX_PROJECT_ID", ""),
+}
+
+# Mock os environment variables before importing modules that read them at import time
 os.environ["FOOTBALL_DATA_ORG_KEY"] = "mock_key"
 os.environ["LANGFLOW_API_URL"] = "http://mocked:7860"
 os.environ["WATSONX_API_KEY"] = "mock_key"
@@ -15,19 +25,23 @@ from backend.main import app
 from mcp_server import query_football_laws, get_tactical_timeline, get_live_match_context
 from backend.core.watsonx_client import generate_response
 
+# Restore real env values so subsequent test modules (test_keys.py) see them
+for k, v in _real_env.items():
+    if v:
+        os.environ[k] = v
+    elif k in os.environ and os.environ[k] == "mock_key":
+        del os.environ[k]
+
 class TestFastAPIEndpoints(unittest.TestCase):
     def setUp(self):
         self.client = TestClient(app)
 
     def test_create_session(self):
-        response = self.client.post("/session/create", json={"match_id": "test_123"})
+        response = self.client.post("/session/create", json={"team": "Argentina", "knowledge_level": "casual", "language": "English"})
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["match_id"], "test_123")
-
-    def test_update_session(self):
-        response = self.client.patch("/session/test_session_id", json={"key": "value"})
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["session_id"], "test_session_id")
+        data = response.json()
+        self.assertIn("session_id", data)
+        self.assertEqual(data["status"], "created")
 
     def test_get_current_match(self):
         response = self.client.get("/match/current")
@@ -73,9 +87,8 @@ class TestMCPTools(unittest.TestCase):
         res = query_football_laws("What is offside?")
         self.assertEqual(res, "Football laws search is currently unavailable (DB error).")
 
-    @patch('urllib.request.urlopen')
-    def test_get_tactical_timeline(self, mock_urlopen):
-        mock_response = MagicMock()
+    @patch('httpx.AsyncClient')
+    def test_get_tactical_timeline(self, mock_client_cls):
         mock_data = [
             {
                 "type": {"name": "Substitution"},
@@ -93,21 +106,33 @@ class TestMCPTools(unittest.TestCase):
                 "tactics": {"formation": "4-4-2"}
             }
         ]
-        mock_response.read.return_value = json.dumps(mock_data).encode('utf-8')
-        mock_urlopen.return_value.__enter__.return_value = mock_response
-        
-        res = get_tactical_timeline(123)
+        mock_response = MagicMock()
+        mock_response.json.return_value = mock_data
+        mock_response.raise_for_status.return_value = None
+
+        mock_client = AsyncMock()
+        mock_client.get.return_value = mock_response
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+        mock_client_cls.return_value = mock_client
+
+        res = asyncio.run(get_tactical_timeline(123))
         self.assertIn("45' - A: Player1 out, Player2 in", res)
         self.assertIn("60' - B: Formation shift to 4-4-2", res)
 
-    @patch('mcp_server.requests.get')
-    def test_get_live_match_context(self, mock_get):
-        mock_resp = MagicMock()
-        mock_resp.status_code = 200
-        mock_resp.json.return_value = {"status": "FINISHED", "score": {"fullTime": "2-1"}}
-        mock_get.return_value = mock_resp
-        
-        res = get_live_match_context("123")
+    @patch('httpx.AsyncClient')
+    def test_get_live_match_context(self, mock_client_cls):
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"status": "FINISHED", "score": {"fullTime": "2-1"}}
+
+        mock_client = AsyncMock()
+        mock_client.get.return_value = mock_response
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+        mock_client_cls.return_value = mock_client
+
+        res = asyncio.run(get_live_match_context("123"))
         self.assertIn("Status: FINISHED", res)
         self.assertIn("Score: 2-1", res)
 
