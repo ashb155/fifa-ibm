@@ -96,7 +96,7 @@ Two pipelines, one shared backend:
                            │
                   ┌────────▼─────────┐
                   │  mcp_server.py    │
-                  │  (FastMCP, 3 tools)│
+                  │  (FastMCP, 6 tools)│
                   └─┬───────┬────────┬┘
                     │       │        │
             ┌───────▼─┐ ┌───▼────┐ ┌▼─────────────┐
@@ -160,7 +160,7 @@ Two pipelines, one shared backend:
 - `PRD.md`, `README.md` — initial documentation drafts
 
 **In progress (this week):**
-- Deleting `laws.py` (dead code, superseded by `docling_ingest.py`)
+- Deleting `laws.py` (Completed)
 - Verifying the exact StatsBomb `match_id` for the 2022 Argentina–France final via a direct lookup script rather than a guessed ID
 - Correcting the Context Forge integration: running `mcp_server.py` over HTTP/SSE, running Context Forge as its own process, registering the tool server via its REST API, and verifying all three tools appear before Langflow is touched
 

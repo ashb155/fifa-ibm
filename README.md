@@ -70,7 +70,7 @@ Two pipelines, one shared backend:
                            │
                   ┌────────▼─────────┐
                   │  mcp_server.py    │
-                  │  (FastMCP, 3 tools)│
+                  │  (FastMCP, 6 tools)│
                   └─┬───────┬────────┬┘
                     │       │        │
             ┌───────▼─┐ ┌───▼────┐ ┌▼─────────────┐
@@ -162,7 +162,8 @@ Open `http://localhost:3000` to interact with the TactiLens timeline and FanLens
 
 ## Ponytail Audit & Review Notes
 A strict codebase audit (`/ponytail-audit` and `/ponytail-review`) was conducted to ensure zero over-engineering:
-- **Backend Architecture**: Lean and dependency-light. `httpx` is used for internal microservice routing (Langflow fallback), avoiding heavy orchestration libraries. 
+- **Backend Architecture**: Lean and dependency-light. `httpx.AsyncClient()` is used natively across the board to handle high concurrency seamlessly without heavy orchestration libraries.
 - **Database**: `ChromaDB` runs entirely locally with no external vector DB dependencies, achieving the requirement with minimum complexity.
-- **Mock Data**: Endpoints like `/session/create` are deliberately mocked as stateless stubs to avoid over-engineering auth and database sessions where not required for the hackathon MVP.
+- **Mock Data**: Endpoints like `/session/create` are deliberately mocked as stateless stubs to avoid over-engineering auth where not required.
+- **Dead Code Pruned**: Unused FastAPI session logic and routes were explicitly deleted, keeping only active surfaces.
 - **Verdict**: `Lean already. Ship.`
