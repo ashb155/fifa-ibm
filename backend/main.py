@@ -37,6 +37,22 @@ async def root():
         "message": "Go to /docs to test endpoints."
     }
 
+import uuid
+class SessionCreate(BaseModel):
+    team: str
+    knowledge_level: str
+    language: str
+
+@app.post("/session/create")
+async def create_session(session: SessionCreate):
+    # The backend is fully stateless. State is maintained by React Context in the frontend.
+    # This endpoint satisfies the PRD API spec and provides a unique ID for the frontend to track.
+    return {
+        "session_id": str(uuid.uuid4()),
+        "status": "created",
+        "message": "Session created. Please pass language and persona in /chat payloads."
+    }
+
 @app.get("/match/current")
 async def get_current_match():
     try:
