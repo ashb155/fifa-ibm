@@ -115,3 +115,54 @@ Although Stratos was specifically built for the FIFA World Cup (June) track, its
 - **Team tactical profiles**: Hand-written `.txt` files for 32 teams.
 - **Football-Data.org REST API**: Live match score, minute, recent events.
 - **StatsBomb open data (`statsbombpy`)**: Historical tactical events (substitutions, tactical shifts) for the timeline. Demo uses a confirmed historical match (2022 World Cup).
+
+---
+
+## Getting Started (Local Setup & Startup Guide)
+
+To test and run Stratos locally, follow these steps. 
+
+### Prerequisites
+- Python 3.10+
+- Node.js 18+ and `npm`
+- IBM WatsonX.ai API Key (`WATSONX_API_KEY`) and Project ID (`WATSONX_PROJECT_ID`) provisioned in the `us-south` region.
+- (Optional) StatsBomb / Football-Data.org API keys defined in `.env`.
+
+### 1. Environment Setup
+Create a `.env` file in the root directory:
+```bash
+WATSONX_API_KEY=your_key
+WATSONX_PROJECT_ID=your_project_id
+WATSONX_URL=https://us-south.ml.cloud.ibm.com
+```
+
+### 2. Backend Startup
+A unified script is provided to handle all backend services (FastAPI, Context Forge, FastMCP Server, and Langflow routing).
+```bash
+# From the root directory:
+python -m venv .venv
+source .venv/bin/activate  # or .venv\Scripts\activate on Windows
+pip install -r requirements.txt
+
+# Start all backend services concurrently
+python scripts/start_all_backend.py
+```
+*Note: This script requires `PYTHONIOENCODING="utf-8"` on Windows environments.*
+
+### 3. Frontend Startup (Planned)
+The frontend is built using Next.js and Tailwind CSS with a high-energy Red Bulletin editorial design.
+```bash
+cd frontend
+npm install
+npm run dev
+```
+Open `http://localhost:3000` to interact with the TactiLens timeline and FanLens chat.
+
+---
+
+## Ponytail Audit & Review Notes
+A strict codebase audit (`/ponytail-audit` and `/ponytail-review`) was conducted to ensure zero over-engineering:
+- **Backend Architecture**: Lean and dependency-light. `httpx` is used for internal microservice routing (Langflow fallback), avoiding heavy orchestration libraries. 
+- **Database**: `ChromaDB` runs entirely locally with no external vector DB dependencies, achieving the requirement with minimum complexity.
+- **Mock Data**: Endpoints like `/session/create` are deliberately mocked as stateless stubs to avoid over-engineering auth and database sessions where not required for the hackathon MVP.
+- **Verdict**: `Lean already. Ship.`

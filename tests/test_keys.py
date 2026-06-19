@@ -18,7 +18,7 @@ def test_football_data():
         return f"Football-Data API Key: FAILED ({e})"
 
 def test_watsonx():
-    from backend.core.granite import generate_response
+    from backend.core.watsonx_client import generate_response
     res = generate_response("Say hello", "casual", "English", "No context")
     if "Error" in res or "failed" in res.lower():
         return f"WatsonX API Key: FAILED ({res})"

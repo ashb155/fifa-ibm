@@ -30,10 +30,6 @@ class ChatRequest(BaseModel):
     persona: str = "casual"
     language: str = "English"
 
-class SessionCreate(BaseModel):
-    match_id: str
-
-
 @app.get("/")
 async def root():
     return {
@@ -41,18 +37,10 @@ async def root():
         "message": "Go to /docs to test endpoints."
     }
 
-@app.post("/session/create")
-async def create_session(session: SessionCreate):
-    return {"session_id": "mock_session_123", "match_id": session.match_id}
-
-@app.patch("/session/{session_id}")
-async def update_session(session_id: str, data: dict):
-    return {"status": "updated", "session_id": session_id}
-
 @app.get("/match/current")
 async def get_current_match():
     try:
-        res = get_live_match_context(match_id="538164") # example id
+        res = await get_live_match_context(match_id="538164") # example id
         return {"status": "live", "match": res}
     except Exception as e:
         return {"status": "error", "match": str(e)}
@@ -60,7 +48,7 @@ async def get_current_match():
 @app.get("/timeline/{match_id}")
 async def get_timeline(match_id: str):
     try:
-        res = get_tactical_timeline(match_id=int(match_id))
+        res = await get_tactical_timeline(match_id=int(match_id))
         return {"timeline": res}
     except Exception as e:
         return {"timeline": f"Error: {str(e)}"}

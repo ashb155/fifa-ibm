@@ -1,9 +1,8 @@
 from mcp.server.fastmcp import FastMCP
 from dotenv import load_dotenv
 import chromadb
-import urllib.request
 import json
-import requests
+import httpx
 import os
 
 load_dotenv()
@@ -45,21 +44,16 @@ def query_team_profile(team_name: str) -> str:
         return f"Search error: {str(e)}"
 
 @mcp.tool()
-def get_tactical_timeline(match_id: int = 3869685) -> str:
+async def get_tactical_timeline(match_id: int = 3869685) -> str:
     """Fetches tactical shifts and substitutions for a match. Default match_id is 2022 World Cup Final."""
     url = f"https://raw.githubusercontent.com/statsbomb/open-data/master/data/events/{match_id}.json"
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req) as response:
-            events = json.loads(response.read().decode("utf-8"))
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, headers={"User-Agent": "Mozilla/5.0"})
+            response.raise_for_status()
+            events = response.json()
             
-        filtered = []
-        for e in events:
-            type_name = e.get("type", {}).get("name")
-            if type_name in ["Substitution", "Tactical Shift"]:
-                filtered.append(e)
-                
-        # Sort by minute, second
+        filtered = [e for e in events if e.get("type", {}).get("name") in ["Substitution", "Tactical Shift"]]
         filtered.sort(key=lambda x: (x.get("minute", 0), x.get("second", 0)))
         
         out = []
@@ -81,17 +75,17 @@ def get_tactical_timeline(match_id: int = 3869685) -> str:
         return f"Service unavailable (StatsBomb API error: {str(e)})"
 
 @mcp.tool()
-def get_live_match_context(match_id: str) -> str:
+async def get_live_match_context(match_id: str) -> str:
     """Fetches real-time match data from Football-Data.org"""
-    # ponytail: one-line GET request, minimal error handling
     try:
         api_key = os.getenv("FOOTBALL_DATA_ORG_KEY")
         if not api_key: return "Error: API key missing"
-        r = requests.get(f"https://api.football-data.org/v4/matches/{match_id}", headers={"X-Auth-Token": api_key})
-        if r.status_code != 200: return f"Error: {r.status_code}"
-        
-        d = r.json()
-        return f"Status: {d.get('status')}. Score: {d.get('score', {}).get('fullTime')}."
+        async with httpx.AsyncClient() as client:
+            r = await client.get(f"https://api.football-data.org/v4/matches/{match_id}", headers={"X-Auth-Token": api_key})
+            if r.status_code != 200: return f"Error: {r.status_code}"
+            
+            d = r.json()
+            return f"Status: {d.get('status')}. Score: {d.get('score', {}).get('fullTime')}."
     except Exception as e:
         return f"Service unavailable (Football-Data API error: {str(e)})"
 
