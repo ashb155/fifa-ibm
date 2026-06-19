@@ -11,7 +11,7 @@ load_dotenv()
 # ponytail: ensure root is in path for mcp_server import
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
-    from mcp_server import get_live_match_context, get_tactical_timeline
+    from mcp_server import get_live_match_context, get_tactical_timeline, get_nearest_world_cup_match
 except ImportError:
     pass
 
@@ -40,8 +40,8 @@ async def root():
 @app.get("/match/current")
 async def get_current_match():
     try:
-        res = await get_live_match_context(match_id="538164") # example id
-        return {"status": "live", "match": res}
+        res = await get_nearest_world_cup_match()
+        return {"status": "success", "match": res}
     except Exception as e:
         return {"status": "error", "match": str(e)}
 

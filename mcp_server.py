@@ -139,5 +139,38 @@ async def get_team_matches(team_id: str, status: str = "SCHEDULED") -> str:
     except Exception as e:
         return f"Service unavailable (Football-Data API error: {str(e)})"
 
+@mcp.tool()
+async def get_nearest_world_cup_match() -> str:
+    """Fetches the nearest (LIVE or upcoming SCHEDULED) World Cup match."""
+    try:
+        api_key = os.getenv("FOOTBALL_DATA_ORG_KEY")
+        if not api_key: return "Error: API key missing"
+        async with httpx.AsyncClient() as client:
+            r = await client.get("https://api.football-data.org/v4/competitions/WC/matches?status=LIVE", headers={"X-Auth-Token": api_key})
+            r.raise_for_status()
+            matches = r.json().get("matches", [])
+            
+            if not matches:
+                r = await client.get("https://api.football-data.org/v4/competitions/WC/matches?status=SCHEDULED", headers={"X-Auth-Token": api_key})
+                r.raise_for_status()
+                matches = r.json().get("matches", [])
+                
+            if not matches:
+                return "No LIVE or SCHEDULED World Cup matches found."
+                
+            m = matches[0]
+            home = m.get('homeTeam', {}).get('name', 'Unknown')
+            away = m.get('awayTeam', {}).get('name', 'Unknown')
+            date = m.get('utcDate', '')
+            status = m.get('status', 'UNKNOWN')
+            score = m.get('score', {}).get('fullTime')
+            
+            out = f"Match: {home} vs {away} | Status: {status} | Time: {date}"
+            if score and status != "SCHEDULED":
+                out += f" | Score: {score}"
+            return out
+    except Exception as e:
+        return f"Service unavailable (Football-Data API error: {str(e)})"
+
 if __name__ == "__main__":
     mcp.run(transport="sse")
