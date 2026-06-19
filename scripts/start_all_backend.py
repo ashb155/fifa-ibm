@@ -26,11 +26,21 @@ signal.signal(signal.SIGTERM, cleanup)
 def start_services():
     env = os.environ.copy()
     env["PYTHONIOENCODING"] = "utf-8"
+    env["PYTHONUTF8"] = "1"
+    
+    # Standard prefix env variables
     env["AUTH_REQUIRED"] = "false"
     env["MCP_REQUIRE_AUTH"] = "false"
     env["ADMIN_API_ENABLED"] = "true"
     env["ADMIN_API_KEY"] = "admin123"
     env["API_ALLOW_BASIC_AUTH"] = "true"
+    
+    # MCPGATEWAY prefix env variables
+    env["MCPGATEWAY_AUTH_REQUIRED"] = "false"
+    env["MCPGATEWAY_MCP_REQUIRE_AUTH"] = "false"
+    env["MCPGATEWAY_ADMIN_API_ENABLED"] = "true"
+    env["MCPGATEWAY_ADMIN_API_KEY"] = "admin123"
+    env["MCPGATEWAY_API_ALLOW_BASIC_AUTH"] = "true"
     
     # 1. Start FastMCP server on port 8012
     print("1. Starting FastMCP Server on port 8012...")
