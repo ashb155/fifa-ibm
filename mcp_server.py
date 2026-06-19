@@ -89,5 +89,55 @@ async def get_live_match_context(match_id: str) -> str:
     except Exception as e:
         return f"Service unavailable (Football-Data API error: {str(e)})"
 
+@mcp.tool()
+async def get_competition_standings(competition_id: str) -> str:
+    """Fetches current standings for a competition from Football-Data.org (e.g. 'PL' for Premier League)."""
+    try:
+        api_key = os.getenv("FOOTBALL_DATA_ORG_KEY")
+        if not api_key: return "Error: API key missing"
+        async with httpx.AsyncClient() as client:
+            r = await client.get(f"https://api.football-data.org/v4/competitions/{competition_id}/standings", headers={"X-Auth-Token": api_key})
+            if r.status_code != 200: return f"Error: {r.status_code}"
+            
+            d = r.json()
+            standings = d.get('standings', [])
+            if not standings: return "No standings available."
+            
+            # Format the top 5 teams of the first table
+            table = standings[0].get('table', [])[:5]
+            out = [f"Top 5 {competition_id} Standings:"]
+            for row in table:
+                pos = row.get('position')
+                team = row.get('team', {}).get('name')
+                pts = row.get('points')
+                out.append(f"{pos}. {team} ({pts} pts)")
+            return "\n".join(out)
+    except Exception as e:
+        return f"Service unavailable (Football-Data API error: {str(e)})"
+
+@mcp.tool()
+async def get_team_matches(team_id: str, status: str = "SCHEDULED") -> str:
+    """Fetches matches for a specific team (e.g. Real Madrid '86'). Status can be SCHEDULED, FINISHED, LIVE."""
+    try:
+        api_key = os.getenv("FOOTBALL_DATA_ORG_KEY")
+        if not api_key: return "Error: API key missing"
+        async with httpx.AsyncClient() as client:
+            r = await client.get(f"https://api.football-data.org/v4/teams/{team_id}/matches?status={status}&limit=5", headers={"X-Auth-Token": api_key})
+            if r.status_code != 200: return f"Error: {r.status_code}"
+            
+            d = r.json()
+            matches = d.get('matches', [])
+            if not matches: return f"No {status} matches found."
+            
+            out = [f"Next 5 {status} matches:"]
+            for m in matches:
+                home = m.get('homeTeam', {}).get('name')
+                away = m.get('awayTeam', {}).get('name')
+                date = m.get('utcDate', '')[:10]
+                out.append(f"{date}: {home} vs {away}")
+            return "\n".join(out)
+    except Exception as e:
+        return f"Service unavailable (Football-Data API error: {str(e)})"
+
 if __name__ == "__main__":
     mcp.run(transport="sse")
