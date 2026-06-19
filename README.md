@@ -88,9 +88,7 @@ Two pipelines, one shared backend:
 
 ## IBM Technology Integration
 
-- **IBM Granite & WatsonX.ai Infrastructure**: Designed to run on `ibm/granite-3-8b-instruct`. 
-  > [!NOTE]
-  > **Regional API Constraint Note**: In the active WatsonX.ai sandbox region (`jp-tok`), Granite text-generation models are currently not provisioned/supported on this project endpoint. To ensure seamless, error-free API execution for judges and during the demo, the backend and Langflow configurations are set to `meta-llama/llama-3-3-70b-instruct`—an enterprise-grade LLM running on the same WatsonX.ai infrastructure.
+- **IBM Granite (`ibm/granite-4-h-small` via WatsonX.ai)**: The core generation engine. Following verification of regional provisioning constraints, we migrated our WatsonX.ai setup to the fully provisioned `us-south` (Dallas) region to utilize the latest generation Granite model (`ibm/granite-4-h-small`) for all user-facing explanations, matching the submission requirements.
 - **Docling**: Parses the 230-page IFAB Laws of the Game PDF into structured markdown using the `HybridChunker(max_tokens=512, merge_peers=True)` to respect document heading structure (e.g., keeping "Law 11 – Offside" as one retrievable unit) for vector search.
 - **Langflow**: The visual orchestration layer. It manages routing queries to the correct tool, assembling prompts, and calling WatsonX. The exported `stratos_flow.json` makes the pipeline transparent.
 - **Context Forge**: The central MCP Gateway running on port `4444`. The local FastMCP tool server (`mcp_server.py`, port `8012`) is registered behind it via a `/servers` REST API call. Langflow connects directly to the Context Forge Gateway (`http://127.0.0.1:4444/sse`) rather than directly to the tool server, satisfying the challenge's architecture pattern.

@@ -46,7 +46,7 @@
           "type": "WatsonXModel",
           "node": {
             "template": {
-              "model_id": {"value": "meta-llama/llama-3-3-70b-instruct"}
+              "model_id": {"value": "ibm/granite-4-h-small"}
             }
           }
         }

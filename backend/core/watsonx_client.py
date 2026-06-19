@@ -6,11 +6,11 @@ load_dotenv()
 
 def generate_response(query: str, persona: str, language: str, context: str, history: list = None) -> str:
     """
-    Calls the IBM Granite API (ibm/granite-3-8b-instruct) to generate an adaptive response.
+    Calls the IBM Granite API (ibm/granite-4-h-small) via WatsonX to generate an adaptive response.
     """
     api_key = os.getenv("WATSONX_API_KEY", "")
     project_id = os.getenv("WATSONX_PROJECT_ID", "")
-    url = os.getenv("WATSONX_URL", "https://jp-tok.ml.cloud.ibm.com").rstrip("/")
+    url = os.getenv("WATSONX_URL", "https://us-south.ml.cloud.ibm.com").rstrip("/")
 
     # Define system prompts based on Persona
     system_prompts = {
@@ -46,7 +46,7 @@ def generate_response(query: str, persona: str, language: str, context: str, his
         }
 
         model = ModelInference(
-            model_id="meta-llama/llama-3-3-70b-instruct",
+            model_id="ibm/granite-4-h-small",
             params=parameters,
             credentials=credentials,
             project_id=project_id

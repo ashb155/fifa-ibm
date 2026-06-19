@@ -103,7 +103,7 @@ async def chat(request: ChatRequest):
     except Exception as e:
         print(f"Langflow failed: {e}. Falling back to direct Granite.")
         try:
-            from backend.core.granite import generate_response
+            from backend.core.watsonx_client import generate_response
             import chromadb
             
             context = ""
