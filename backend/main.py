@@ -105,7 +105,7 @@ class TimelineResponse(BaseModel):
     timeline: str
 
 # --- Initialize ChromaDB collection globally to avoid severe disk I/O lag on every request ---
-from backend.core.db import get_collection, chroma_client
+from backend.core.db import get_collection, chroma_client, query_laws
 team_col = get_collection("team_profiles")
 
 # --- Endpoints ---
@@ -154,11 +154,11 @@ async def get_timeline(match_id: str):
     except Exception as e:
         return {"timeline": f"Error: {str(e)}"}
 
+
 @app.post("/chat", response_model=ChatResponse, tags=["chat"])
 async def chat(request: ChatRequest):
-    # Call the Langflow REST API instead of bypassing it
     langflow_url = os.getenv("LANGFLOW_API_URL", "http://127.0.0.1:7860/api/v1/run/Stratos")
-    
+
     payload = {
         "input_value": request.query,
         "input_type": "chat",
@@ -170,45 +170,59 @@ async def chat(request: ChatRequest):
             }
         }
     }
-    
+
     try:
         async with httpx.AsyncClient() as client:
-            # Reduced timeout from 60s to 5s so the fallback kicks in almost instantly if Langflow is offline
-            lf_response = await client.post(langflow_url, json=payload, timeout=5.0)
+            lf_response = await client.post(langflow_url, json=payload, timeout=30.0)
             lf_response.raise_for_status()
             result = lf_response.json()
-            
+
             try:
                 message = result["outputs"][0]["outputs"][0]["results"]["message"]["text"]
             except KeyError:
                 message = str(result)
-                
+
             return {
                 "response": message,
                 "source": "Langflow Orchestration (Granite + Context Forge)"
             }
+
     except Exception as e:
-        print(f"Langflow failed: {e}. Falling back to direct Granite.")
+        print(f"Langflow failed or offline. Falling back to direct Granite.")
         try:
             from backend.core.watsonx_client import generate_response
-            
-            context = ""
+
+            context_str = ""
+
+            # A) Query FIFA Laws
+            retrieved_rules = query_laws(query_text=request.query, n_results=2)
+            if retrieved_rules:
+                context_str += "FIFA RULEBOOK CONTEXT (Strict Instruction: ONLY use this context if it directly answers the user's question. If unrelated, ignore it entirely):\n"
+                context_str += "\n---\n".join(retrieved_rules) + "\n\n"
+
+            # B) Query Team Profiles
             if team_col:
                 try:
                     res = team_col.query(query_texts=[request.query], n_results=1)
                     docs = res.get("documents", [[]])[0]
                     if docs:
-                        context = docs[0]
+                        context_str += f"TEAM PROFILE CONTEXT:\n{docs[0]}\n"
                 except Exception as db_e:
-                    print(f"Chroma query failed: {db_e}")
-                
-            fallback_response = generate_response(request.query, request.persona, request.language, context, request.history)
+                    print(f"Chroma team query failed: {db_e}")
+
+            fallback_response = generate_response(
+                query=request.query,
+                persona=request.persona,
+                language=request.language,
+                context=context_str,
+                history=request.history
+            )
             return {
                 "response": fallback_response,
-                "source": "Direct Granite Fallback"
+                "source": "Direct Granite Fallback + RAG" if context_str else "Direct Granite Fallback"
             }
         except Exception as fallback_e:
             return {
-                "response": f"Error calling Langflow API and fallback failed: {str(e)}\nFallback error: {str(fallback_e)}",
+                "response": f"System error. Langflow unavailable and fallback failed: {str(fallback_e)}",
                 "source": "Error"
             }

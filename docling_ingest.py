@@ -2,7 +2,6 @@ import chromadb
 from docling.document_converter import DocumentConverter
 from docling.chunking import HybridChunker
 
-# ponytail: docling used strictly to satisfy hackathon requirement.
 def ingest():
     converter = DocumentConverter()
     result = converter.convert("docs/laws.md")
@@ -12,12 +11,22 @@ def ingest():
 
     client = chromadb.PersistentClient(path="./chroma_db")
     collection = client.get_or_create_collection("fifa_laws")
-    
+
     docs, ids, metadatas = [], [], []
     for i, c in enumerate(chunks):
         docs.append(c.text)
-        ids.append(f"chunk_{i}")
-        metadatas.append({"source": "laws.md"})
+        ids.append(f"laws_chunk_{i}")
+
+        heading = "General"
+        if hasattr(c, "meta") and hasattr(c.meta, "headings") and c.meta.headings:
+            heading = c.meta.headings[0]
+
+        metadatas.append({
+            "source": "laws.md",
+            "document_type": "regulation",
+            "section": heading,
+            "token_length": len(c.text.split())
+        })
     collection.add(documents=docs, ids=ids, metadatas=metadatas)
     print(f"Ingested {len(docs)} chunks.")
 
