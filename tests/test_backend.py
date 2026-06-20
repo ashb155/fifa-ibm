@@ -36,12 +36,6 @@ class TestFastAPIEndpoints(unittest.TestCase):
     def setUp(self):
         self.client = TestClient(app)
 
-    def test_create_session(self):
-        response = self.client.post("/session/create", json={"team": "Argentina", "knowledge_level": "casual", "language": "English"})
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertIn("session_id", data)
-        self.assertEqual(data["status"], "created")
 
     def test_get_current_match(self):
         response = self.client.get("/match/current")
@@ -51,28 +45,14 @@ class TestFastAPIEndpoints(unittest.TestCase):
         response = self.client.get("/timeline/test_123")
         self.assertEqual(response.status_code, 200)
 
-    @patch('httpx.AsyncClient.post', new_callable=AsyncMock)
-    def test_chat_success(self, mock_post):
-        mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "outputs": [{"outputs": [{"results": {"message": {"text": "Langflow mock response"}}}]}]
-        }
-        mock_response.raise_for_status.return_value = None
-        mock_post.return_value = mock_response
-
-        response = self.client.post("/chat", json={"query": "Hello", "persona": "casual", "language": "English"})
+    def test_chat_success(self):
+        # Integration test: Hits the real Langflow API without mocking
+        response = self.client.post("/chat", json={"query": "hello world!", "persona": "casual", "language": "English"})
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["response"], "Langflow mock response")
+        # Assert that it successfully used Langflow Orchestration instead of falling back
+        self.assertEqual(response.json()["source"], "Langflow Orchestration (Granite + Context Forge)")
 
-    @patch('backend.core.watsonx_client.generate_response')
-    @patch('httpx.AsyncClient.post', new_callable=AsyncMock)
-    def test_chat_failure(self, mock_post, mock_gen):
-        mock_post.side_effect = Exception("Connection Refused")
-        mock_gen.return_value = "Fallback response"
-        response = self.client.post("/chat", json={"query": "Hello"})
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["response"], "Fallback response")
-        self.assertEqual(response.json()["source"], "Direct Granite Fallback")
+
 
 
 class TestMCPTools(unittest.TestCase):

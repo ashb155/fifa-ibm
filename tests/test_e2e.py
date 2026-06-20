@@ -42,9 +42,8 @@ def test_e2e_endpoints():
     r = requests.post(f"{base}/chat", json={"query": "Hello"})
     assert r.status_code == 200, f"/chat returned {r.status_code}"
 
-    # We expect the /chat endpoint to handle missing Langflow gracefully and
-    # surface that in the response source.
+    # We expect the /chat endpoint to successfully route through Langflow
     source = r.json().get("source", "")
-    assert "Error" in source or "Fallback" in source, (
-        f"Expected Langflow-missing indicator in source, got: {source!r}"
+    assert source == "Langflow Orchestration (Granite + Context Forge)", (
+        f"Expected Langflow to work, but got fallback source: {source!r}"
     )

@@ -125,7 +125,8 @@ async def get_timeline(match_id: str):
 
 @app.post("/chat", response_model=ChatResponse, tags=["chat"])
 async def chat(request: ChatRequest):
-    langflow_url = os.getenv("LANGFLOW_API_URL", "http://127.0.0.1:7860/api/v1/run/Stratos")
+    langflow_url = os.getenv("LANGFLOW_API_URL")
+    langflow_api_key = os.getenv("LANGFLOW_API_KEY")
 
     payload = {
         "input_value": request.query,
@@ -139,9 +140,13 @@ async def chat(request: ChatRequest):
         }
     }
 
+    headers = {}
+    if langflow_api_key:
+        headers["x-api-key"] = langflow_api_key
+
     try:
         async with httpx.AsyncClient() as client:
-            lf_response = await client.post(langflow_url, json=payload, timeout=30.0)
+            lf_response = await client.post(langflow_url, json=payload, headers=headers, timeout=30.0)
             lf_response.raise_for_status()
             result = lf_response.json()
 
@@ -156,7 +161,12 @@ async def chat(request: ChatRequest):
             }
 
     except Exception as e:
-        print(f"Langflow failed or offline. Falling back to direct Granite.")
+        print(f"Langflow failed or offline. Error: {e}")
+        try:
+            print(f"Response content: {lf_response.text}")
+        except:
+            pass
+        print("Falling back to direct Granite.")
         try:
             from backend.core.watsonx_client import generate_response
 
