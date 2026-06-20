@@ -73,20 +73,24 @@ async def get_tactical_timeline(match_id: int = 3869685) -> str:
     except Exception as e:
         return f"Service unavailable (StatsBomb API error: {str(e)})"
 
+async def _fetch_football_data(url: str) -> dict:
+    """Shared helper to fetch from Football-Data.org."""
+    api_key = os.getenv("FOOTBALL_DATA_ORG_KEY")
+    if not api_key:
+        raise ValueError("API key missing")
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        r = await client.get(url, headers={"X-Auth-Token": api_key})
+        r.raise_for_status()
+        return r.json()
+
 @mcp.tool()
 async def get_live_match_context(match_id: str) -> str:
     """Fetches real-time match data from Football-Data.org"""
     if not match_id or not match_id.strip():
         return "Error: match_id must be a non-empty string."
     try:
-        api_key = os.getenv("FOOTBALL_DATA_ORG_KEY")
-        if not api_key: return "Error: API key missing"
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            r = await client.get(f"https://api.football-data.org/v4/matches/{match_id}", headers={"X-Auth-Token": api_key})
-            if r.status_code != 200: return f"Error: {r.status_code}"
-            
-            d = r.json()
-            return f"Status: {d.get('status')}. Score: {d.get('score', {}).get('fullTime')}."
+        d = await _fetch_football_data(f"https://api.football-data.org/v4/matches/{match_id}")
+        return f"Status: {d.get('status')}. Score: {d.get('score', {}).get('fullTime')}."
     except Exception as e:
         return f"Service unavailable (Football-Data API error: {str(e)})"
 
@@ -94,25 +98,19 @@ async def get_live_match_context(match_id: str) -> str:
 async def get_competition_standings(competition_id: str) -> str:
     """Fetches current standings for a competition from Football-Data.org (e.g. 'PL' for Premier League)."""
     try:
-        api_key = os.getenv("FOOTBALL_DATA_ORG_KEY")
-        if not api_key: return "Error: API key missing"
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            r = await client.get(f"https://api.football-data.org/v4/competitions/{competition_id}/standings", headers={"X-Auth-Token": api_key})
-            if r.status_code != 200: return f"Error: {r.status_code}"
-            
-            d = r.json()
-            standings = d.get('standings', [])
-            if not standings: return "No standings available."
-            
-            # Format the top 5 teams of the first table
-            table = standings[0].get('table', [])[:5]
-            out = [f"Top 5 {competition_id} Standings:"]
-            for row in table:
-                pos = row.get('position')
-                team = row.get('team', {}).get('name')
-                pts = row.get('points')
-                out.append(f"{pos}. {team} ({pts} pts)")
-            return "\n".join(out)
+        d = await _fetch_football_data(f"https://api.football-data.org/v4/competitions/{competition_id}/standings")
+        standings = d.get('standings', [])
+        if not standings: return "No standings available."
+        
+        # Format the top 5 teams of the first table
+        table = standings[0].get('table', [])[:5]
+        out = [f"Top 5 {competition_id} Standings:"]
+        for row in table:
+            pos = row.get('position')
+            team = row.get('team', {}).get('name')
+            pts = row.get('points')
+            out.append(f"{pos}. {team} ({pts} pts)")
+        return "\n".join(out)
     except Exception as e:
         return f"Service unavailable (Football-Data API error: {str(e)})"
 
@@ -120,23 +118,17 @@ async def get_competition_standings(competition_id: str) -> str:
 async def get_team_matches(team_id: str, status: str = "SCHEDULED") -> str:
     """Fetches matches for a specific team (e.g. Real Madrid '86'). Status can be SCHEDULED, FINISHED, LIVE."""
     try:
-        api_key = os.getenv("FOOTBALL_DATA_ORG_KEY")
-        if not api_key: return "Error: API key missing"
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            r = await client.get(f"https://api.football-data.org/v4/teams/{team_id}/matches?status={status}&limit=5", headers={"X-Auth-Token": api_key})
-            if r.status_code != 200: return f"Error: {r.status_code}"
-            
-            d = r.json()
-            matches = d.get('matches', [])
-            if not matches: return f"No {status} matches found."
-            
-            out = [f"Next 5 {status} matches:"]
-            for m in matches:
-                home = m.get('homeTeam', {}).get('name')
-                away = m.get('awayTeam', {}).get('name')
-                date = m.get('utcDate', '')[:10]
-                out.append(f"{date}: {home} vs {away}")
-            return "\n".join(out)
+        d = await _fetch_football_data(f"https://api.football-data.org/v4/teams/{team_id}/matches?status={status}&limit=5")
+        matches = d.get('matches', [])
+        if not matches: return f"No {status} matches found."
+        
+        out = [f"Next 5 {status} matches:"]
+        for m in matches:
+            home = m.get('homeTeam', {}).get('name')
+            away = m.get('awayTeam', {}).get('name')
+            date = m.get('utcDate', '')[:10]
+            out.append(f"{date}: {home} vs {away}")
+        return "\n".join(out)
     except Exception as e:
         return f"Service unavailable (Football-Data API error: {str(e)})"
 
@@ -144,32 +136,33 @@ async def get_team_matches(team_id: str, status: str = "SCHEDULED") -> str:
 async def get_nearest_world_cup_match() -> str:
     """Fetches the nearest (LIVE or upcoming SCHEDULED) World Cup match."""
     try:
-        api_key = os.getenv("FOOTBALL_DATA_ORG_KEY")
-        if not api_key: return "Error: API key missing"
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            r = await client.get("https://api.football-data.org/v4/competitions/WC/matches?status=LIVE", headers={"X-Auth-Token": api_key})
-            r.raise_for_status()
-            matches = r.json().get("matches", [])
+        try:
+            d = await _fetch_football_data("https://api.football-data.org/v4/competitions/WC/matches?status=LIVE")
+            matches = d.get("matches", [])
+        except Exception:
+            matches = []
             
-            if not matches:
-                r = await client.get("https://api.football-data.org/v4/competitions/WC/matches?status=SCHEDULED", headers={"X-Auth-Token": api_key})
-                r.raise_for_status()
-                matches = r.json().get("matches", [])
+        if not matches:
+            try:
+                d = await _fetch_football_data("https://api.football-data.org/v4/competitions/WC/matches?status=SCHEDULED")
+                matches = d.get("matches", [])
+            except Exception:
+                pass
                 
-            if not matches:
-                return "No LIVE or SCHEDULED World Cup matches found."
-                
-            m = matches[0]
-            home = m.get('homeTeam', {}).get('name', 'Unknown')
-            away = m.get('awayTeam', {}).get('name', 'Unknown')
-            date = m.get('utcDate', '')
-            status = m.get('status', 'UNKNOWN')
-            score = m.get('score', {}).get('fullTime')
+        if not matches:
+            return "No LIVE or SCHEDULED World Cup matches found."
             
-            out = f"Match: {home} vs {away} | Status: {status} | Time: {date}"
-            if score and status != "SCHEDULED":
-                out += f" | Score: {score}"
-            return out
+        m = matches[0]
+        home = m.get('homeTeam', {}).get('name', 'Unknown')
+        away = m.get('awayTeam', {}).get('name', 'Unknown')
+        date = m.get('utcDate', '')
+        status = m.get('status', 'UNKNOWN')
+        score = m.get('score', {}).get('fullTime')
+        
+        out = f"Match: {home} vs {away} | Status: {status} | Time: {date}"
+        if score and status != "SCHEDULED":
+            out += f" | Score: {score}"
+        return out
     except Exception as e:
         return f"Service unavailable (Football-Data API error: {str(e)})"
 

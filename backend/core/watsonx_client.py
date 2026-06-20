@@ -69,13 +69,15 @@ def generate_response(query: str, persona: str, language: str, context: str, his
         )
 
 
-        from tenacity import retry, stop_after_attempt, wait_exponential
-
-        @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, max=4))
-        def _call_model():
-            return model.generate_text(prompt=full_prompt).strip()
-
-        return _call_model()
+        import time
         
+        for attempt in range(3):
+            try:
+                return model.generate_text(prompt=full_prompt).strip()
+            except Exception as e:
+                if attempt == 2:
+                    raise e
+                time.sleep(2 ** attempt)  # Simple exponential backoff: 1s, 2s
+
     except Exception as e:
         return f"IBM Granite generation failed: {str(e)}"

@@ -69,29 +69,7 @@ class ChatRequest(BaseModel):
         }
     }
 
-class SessionCreate(BaseModel):
-    team: str
-    knowledge_level: str
-    language: str
-
-    model_config = {
-        "json_schema_extra": {
-            "examples": [
-                {
-                    "team": "Argentina",
-                    "knowledge_level": "casual",
-                    "language": "English",
-                }
-            ]
-        }
-    }
-
 # --- Pydantic response models ---
-
-class SessionResponse(BaseModel):
-    session_id: str
-    status: str
-    message: str
 
 class ChatResponse(BaseModel):
     response: str
@@ -126,16 +104,6 @@ async def health():
             "langflow": os.getenv("LANGFLOW_API_URL", "http://127.0.0.1:7860/api/v1/run/Stratos"),
             "watsonx": bool(os.getenv("WATSONX_API_KEY")),
         },
-    }
-
-@app.post("/session/create", response_model=SessionResponse, tags=["session"])
-async def create_session(session: SessionCreate):
-    # The backend is fully stateless. State is maintained by React Context in the frontend.
-    # This endpoint satisfies the PRD API spec and provides a unique ID for the frontend to track.
-    return {
-        "session_id": str(uuid.uuid4()),
-        "status": "created",
-        "message": "Session created. Please pass language and persona in /chat payloads."
     }
 
 @app.get("/match/current", response_model=MatchResponse, tags=["match"])
