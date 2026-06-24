@@ -7,7 +7,6 @@ chroma_db/
 mcp.db*
 payload.json
 install_skills.py
-frontend/
 users.db
 mcp.db*
 *.db
