@@ -28,7 +28,7 @@ docling-parse
 docling-slim
 durationpy
 et_xmlfile
-Faker
+
 filelock
 filetype
 flatbuffers
@@ -90,7 +90,7 @@ polyfactory
 propcache
 protobuf
 psutil
-pybase64
+
 pyclipper
 pycparser
 pydantic
@@ -102,7 +102,7 @@ pylatexenc
 pypdfium2
 PyPika
 pyproject_hooks
-python-dateutil
+
 python-docx
 python-dotenv
 python-multipart
@@ -124,7 +124,7 @@ semchunk
 setuptools
 shapely
 shellingham
-six
+
 soupsieve
 sse-starlette
 starlette

@@ -8,3 +8,9 @@ mcp.db*
 payload.json
 install_skills.py
 frontend/
+users.db
+mcp.db*
+*.db
+.claude/
+.cursor/
+.impeccable/
