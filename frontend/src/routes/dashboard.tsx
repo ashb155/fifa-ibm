@@ -93,6 +93,7 @@ function Dashboard() {
   // Match & Timeline data
   const [matches, setMatches] = useState<StatsBombMatch[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState<StatsBombMatch | null>(null);
   const [timelineLoading, setTimelineLoading] = useState(false);
   const [timelineData, setTimelineData] = useState<string>("");
@@ -280,6 +281,8 @@ function Dashboard() {
                   onSelectMatch={setSelectedMatch}
                   searchQuery={searchQuery}
                   onSearchChange={setSearchQuery}
+                  isSearchFocused={isSearchFocused}
+                  onSearchFocusChange={setIsSearchFocused}
                   key="t"
                 />
               )}
@@ -457,6 +460,8 @@ function TimelinePanel({
   onSelectMatch,
   searchQuery,
   onSearchChange,
+  isSearchFocused,
+  onSearchFocusChange,
 }: {
   selectedMatch: StatsBombMatch | null;
   timelineData: string;
@@ -465,6 +470,8 @@ function TimelinePanel({
   onSelectMatch: (m: StatsBombMatch) => void;
   searchQuery: string;
   onSearchChange: (q: string) => void;
+  isSearchFocused: boolean;
+  onSearchFocusChange: (f: boolean) => void;
 }) {
   return (
     <motion.div
@@ -488,13 +495,15 @@ function TimelinePanel({
             type="text"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
+            onFocus={() => onSearchFocusChange(true)}
+            onBlur={() => setTimeout(() => onSearchFocusChange(false), 200)}
             placeholder="Search matches..."
-            className="bg-black/50 border border-border rounded-full px-4 py-1.5 text-[12px] text-frost outline-none focus:border-copper transition max-w-[200px]"
+            className="bg-white/5 border border-transparent rounded-full px-4 py-1.5 text-[12px] text-frost outline-none focus:bg-white/10 focus:border-copper transition max-w-[200px]"
           />
         </div>
       </div>
 
-      {searchQuery && (
+      {(isSearchFocused || searchQuery) && (
         <div className="mb-6 max-h-[150px] overflow-y-auto border border-border rounded-xl bg-black/40 p-2 space-y-1 no-scrollbar">
           {matches.map((m) => (
             <button
@@ -566,7 +575,7 @@ function TacticsPanel() {
               transition={{ delay: (i % 24) * 0.012, duration: 0.6 }}
               className="rounded-[2px]"
               style={{
-                background: `radial-gradient(circle, rgba(188,113,85,${v}) 0%, rgba(188,113,85,0) 70%)`,
+                background: `radial-gradient(circle, rgba(253, 224, 71, ${v * 0.75}) 0%, rgba(253, 224, 71, 0) 70%)`,
               }}
             />
           ))}
@@ -755,12 +764,12 @@ function Companion({
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && onSend()}
           placeholder={chatLoading ? "Stratos is thinking..." : "Ask about any moment…"}
-          className="flex-1 bg-white/5 px-4 py-2.5 rounded-full text-[13px] placeholder:text-platinum outline-none focus:bg-white/10 transition disabled:opacity-50"
+          className="flex-1 bg-white/5 border border-transparent px-4 py-2.5 rounded-full text-[13px] placeholder:text-platinum outline-none focus:bg-white/10 focus:border-copper transition disabled:opacity-50"
         />
         <button
           onClick={() => onSend()}
           disabled={chatLoading || !input.trim()}
-          className="w-10 h-10 rounded-full bg-frost text-black flex items-center justify-center hover:scale-105 transition disabled:opacity-50"
+          className="w-10 h-10 rounded-full bg-copper text-white flex items-center justify-center hover-lift transition disabled:opacity-50"
           aria-label="Send"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

@@ -115,7 +115,7 @@ function Nav({ onStart, userOnboarded }: { onStart: () => void; userOnboarded: b
         </nav>
         <button
           onClick={onStart}
-          className="px-5 py-2 rounded-full bg-frost text-black text-[13px] font-medium hover:opacity-90 transition"
+          className="px-5 py-2 rounded-full bg-copper text-white text-[13px] font-medium hover-lift"
         >
           {userOnboarded ? "Console" : "Get started"}
         </button>
@@ -192,14 +192,14 @@ function Hero({ onStart, userOnboarded }: { onStart: () => void; userOnboarded: 
             >
               <button
                 onClick={onStart}
-                className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-frost text-black text-[14px] font-medium hover:opacity-90 transition"
+                className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-copper text-white text-[14px] font-medium hover-lift"
               >
                 {userOnboarded ? "Enter Console" : "Calibrate Stratos"}
                 <span className="transition-transform group-hover:translate-x-0.5"><Arrow /></span>
               </button>
               <a
                 href="#timeline"
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full border border-white/15 text-[14px] hover:bg-white/5 transition"
+                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full border border-border text-[14px] text-platinum hover:text-frost hover:bg-white/5 transition"
               >
                 See it in action
               </a>
@@ -857,7 +857,7 @@ const STACK = [
 
 function Stack() {
   return (
-    <section id="stack" className="relative py-32 md:py-44 bg-paper text-obsidian">
+    <section id="stack" className="relative py-32 md:py-44 bg-carbon border-y border-border text-foreground">
       <div className="mx-auto max-w-[1440px] px-6 md:px-12">
         <Reveal>
           <div className="font-mono text-[11px] uppercase tracking-[0.22em] text-platinum mb-5">
@@ -868,21 +868,21 @@ function Stack() {
           <h2 className="text-display text-[44px] md:text-[80px] leading-[0.95] max-w-[14ch]">
             All five tools.
             <br />
-            <span style={{ color: "#86868b" }}>None decorative.</span>
+            <span className="text-platinum">None decorative.</span>
           </h2>
         </Reveal>
 
-        <div className="mt-20 border-t border-black/10">
+        <div className="mt-20 border-t border-border">
           {STACK.map((t, i) => (
             <Reveal key={t.name} delay={i * 0.06}>
-              <div className="group grid grid-cols-12 gap-6 py-10 border-b border-black/10 hover:bg-black/[0.02] transition px-2">
+              <div className="group grid grid-cols-12 gap-6 py-10 border-b border-border hover:bg-white/[0.02] transition px-2">
                 <div className="col-span-2 md:col-span-1 font-mono text-[12px] text-platinum self-center">
                   ◆ {String(i + 1).padStart(2, "0")}
                 </div>
                 <div className="col-span-10 md:col-span-5 text-display text-[36px] md:text-[52px] leading-[0.95] group-hover:text-copper transition-colors">
                   {t.name}
                 </div>
-                <div className="col-span-12 md:col-span-6 text-[16px] md:text-[18px] text-obsidian/70 self-center leading-[1.5]">
+                <div className="col-span-12 md:col-span-6 text-[16px] md:text-[18px] text-platinum self-center leading-[1.5]">
                   {t.role}
                 </div>
               </div>
@@ -964,14 +964,14 @@ function FinalCTA({ onStart, userOnboarded }: { onStart: () => void; userOnboard
           <div className="flex items-center justify-center gap-3 mt-12 flex-wrap">
             <button
               onClick={onStart}
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-frost text-black text-[15px] font-medium hover:opacity-90 transition"
+              className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-copper text-white text-[15px] font-medium hover-lift"
             >
               {userOnboarded ? "Enter Console" : "Calibrate Stratos"}
               <Arrow />
             </button>
             <a
               href="#engine"
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-full border border-white/15 text-[15px] hover:bg-white/5 transition"
+              className="inline-flex items-center gap-2 px-8 py-4 rounded-full border border-border text-[15px] text-platinum hover:text-frost hover:bg-white/5 transition"
             >
               Read the architecture
             </a>
